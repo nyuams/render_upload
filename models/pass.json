@@ -3,39 +3,86 @@
     "passTypeIdentifier": "pass.com.techchallenge.nyu",
     "serialNumber": "1735333655935",
     "teamIdentifier": "A3MC85T4RA",
-    "organizationName": "Shubham Patel",
-    "description": "Tech Challenge Discount Coupon",
+    "organizationName": "NYU EM Tech",
+    "description": "Appointment Card",
     "foregroundColor": "rgb(255, 255, 255)",
     "backgroundColor": "rgb(41, 128, 185)",
     "labelColor": "rgb(236, 240, 241)",
     "barcode": {
-        "message": "",
+        "message": "https://example.com/pass/1735333655935",
         "format": "PKBarcodeFormatQR",
         "messageEncoding": "iso-8859-1",
-        "altText": "Scan to redeem discount"
+        "altText": "Scan for appointment"
     },
-    "suppressStripShine": true,
-    "coupon": {
+    "barcodes": [{
+        "message": "https://example.com/pass/1735333655935",
+        "format": "PKBarcodeFormatQR",
+        "messageEncoding": "iso-8859-1",
+        "altText": "Scan for appointment"
+    }],
+    "locations": [
+        {
+            "latitude": 40.7313,
+            "longitude": -74.0627,
+            "relevantText": "Your appointment is nearby. Tap to get directions."
+        }
+    ],
+    "eventTicket": {
         "headerFields": [
             {
-                "key": "expires",
-                "label": "EXPIRES",
-                "value": "",
-                "dateStyle": "PKDateStyleShort"
+                "key": "date",
+                "label": "DATE",
+                "value": "2025-03-20T10:00:00-04:00",
+                "dateStyle": "PKDateStyleMedium"
             }
         ],
         "primaryFields": [
             {
-                "key": "offer",
-                "label": "DISCOUNT",
-                "value": "25 OFF"
+                "key": "event",
+                "label": "APPOINTMENT",
+                "value": "Doctor Visit"
             }
         ],
         "secondaryFields": [
             {
-                "key": "service",
-                "label": "SERVICE",
-                "value": "Tech Support"
+                "key": "time",
+                "label": "TIME",
+                "value": "2025-03-20T10:00:00-04:00",
+                "timeStyle": "PKDateStyleShort"
+            },
+            {
+                "key": "location",
+                "label": "LOCATION",
+                "value": "417 Hoboken Ave"
+            }
+        ],
+        "auxiliaryFields": [
+            {
+                "key": "name",
+                "label": "CLIENT",
+                "value": "John Doe"
+            },
+            {
+                "key": "provider",
+                "label": "PROVIDER",
+                "value": "Dr. Smith"
+            }
+        ],
+        "backFields": [
+            {
+                "key": "address",
+                "label": "FULL ADDRESS",
+                "value": "417 Hoboken Ave, Jersey City, NJ 07306"
+            },
+            {
+                "key": "notes",
+                "label": "NOTES",
+                "value": "Please arrive 15 minutes before your scheduled appointment."
+            },
+            {
+                "key": "directions",
+                "label": "DIRECTIONS",
+                "value": "https://maps.apple.com/?q=417+Hoboken+Ave,+Jersey+City,+NJ+07306"
             }
         ]
     }
