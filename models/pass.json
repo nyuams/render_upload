@@ -64,7 +64,7 @@
             },
             {
                 "key": "provider",
-                "label": "PROVIDER",
+                "label": "Host",
                 "value": "Dr. Smith"
             }
         ],
