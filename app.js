@@ -315,7 +315,9 @@ app.post('/generate-pass', async (req, res) => {
             'pass.json': Buffer.from(JSON.stringify(passJson)),
             'icon.png': fs.readFileSync(path.join(__dirname, 'models/icon.png')),
             'icon@2x.png': fs.readFileSync(path.join(__dirname, 'models/icon@2x.png')),
-            'icon@3x.png': fs.readFileSync(path.join(__dirname, 'models/icon@3x.png'))
+            'icon@3x.png': fs.readFileSync(path.join(__dirname, 'models/icon@3x.png')),
+            'logo.png': fs.readFileSync(path.join(__dirname, 'models/logo.png')),
+            'logo@2x.png': fs.readFileSync(path.join(__dirname, 'models/logo@2x.png'))
         };
 
         // Add strip images if they were processed
