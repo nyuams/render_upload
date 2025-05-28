@@ -28,6 +28,15 @@ app.use((req, res, next) => {
     next();
 });
 
+// Serve opt-in page
+app.get('/optin', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'optin.html'));
+});
+
+// Serve privacy policy page
+app.get('/privacy', (req, res) => {
+  res.sendFile(path.join(__dirname, 'public', 'privacy.html'));
+});
 // Helper function to parse RGB color
 function parseRGBColor(rgbString) {
     const matches = rgbString.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
