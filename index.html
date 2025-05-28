@@ -1,0 +1,1028 @@
+   <!doctype html>
+    <html lang="en">
+        <head>
+            <base target="_top">
+                <meta charset="UTF-8">
+                    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+                        <title>Appointment Management System</title>
+
+                        <!-- Material Icons -->
+                        <link href="https://fonts.googleapis.com/icon?family=Material+Icons" rel="stylesheet">
+
+                            <!-- Google Fonts -->
+                            <link href="https://fonts.googleapis.com/css2?family=Roboto:wght@300;400;500;700&display=swap" rel="stylesheet">
+                                <!-- QR Code Library -->
+                                <script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+
+                                <style>
+    /* Styles for autocomplete suggestions */
+                                    .suggestion-list {
+                                        background-color: white;
+                                    border: 1px solid #e1e4f5;
+                                    border-radius: 12px;
+                                    box-shadow: 0 8px 32px rgba(67, 102, 237, 0.1);
+                                    max-height: 200px;
+                                    overflow-y: auto;
+                                    position: absolute;
+                                    z-index: 1000;
+                                    width: 100%;
+                                    margin-top: 2px;
+}
+
+                                    .suggestion-item {
+                                        padding: 10px 15px;
+                                    cursor: pointer;
+                                    transition: background-color 0.2s;
+                                    border-bottom: 1px solid #f0f2f9;
+}
+
+                                    .suggestion-item:last-child {
+                                        border-bottom: none;
+}
+
+                                    .suggestion-item:hover {
+                                        background-color: rgba(67, 102, 237, 0.1);
+}
+                                    :root {
+                                        --primary-gradient: linear-gradient(135deg, #4366ed, #5c7ef5);
+                                    --hover-gradient: linear-gradient(135deg, #3a5ad4, #4366ed);
+                                    --card-shadow: 0 8px 32px rgba(67, 102, 237, 0.1);
+                                    --primary-blue: #4366ed;
+                                    --secondary-blue: #5c7ef5;
+                                    --text-blue: #3a5ad4;
+                                    --primary-color: #4366ed;
+                                    --primary-light: #5c7ef5;
+                                    --primary-dark: #3a5ad4;
+                                    --secondary-color: #f8f9ff;
+                                    --text-color: #333;
+                                    --error-color: #d93025;
+                                    --success-color: #34a853;
+                                    --border-radius: 16px;
+                                    --box-shadow: 0 8px 32px rgba(67, 102, 237, 0.1);
+                                    --animation-speed: 15s;
+    }
+
+                                    * {
+                                        box-sizing: border-box;
+                                    margin: 0;
+                                    padding: 0;
+    }
+
+                                    body {
+                                        font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+                                    background-color: #f8f9ff;
+                                    color: var(--text-color);
+                                    line-height: 1.6;
+                                    padding: 20px;
+    }
+
+                                    .main-container {
+                                        max-width: 800px;
+                                    margin: 2rem auto;
+                                    padding: 0 1rem;
+    }
+
+                                    .banner {
+                                        background: var(--primary-gradient);
+                                    padding: 3rem 1rem;
+                                    border-radius: 24px;
+                                    position: relative;
+                                    overflow: hidden;
+                                    margin-bottom: 2rem;
+                                    transition: transform 0.3s ease;
+    }
+
+                                    .banner:hover {
+                                        transform: translateY(-2px);
+    }
+
+                                    /* Animated background elements */
+                                    .banner::before,
+                                    .banner::after {
+                                        content: '';
+                                    position: absolute;
+                                    width: 300px;
+                                    height: 300px;
+                                    background: rgba(255, 255, 255, 0.1);
+                                    border-radius: 50%;
+                                    transition: 0.5s;
+                                    animation: animate var(--animation-speed) linear infinite;
+    }
+
+                                    .banner::before {
+                                        top: -50%;
+                                    left: -10%;
+    }
+
+                                    .banner::after {
+                                        bottom: -50%;
+                                    right: -10%;
+                                    animation-delay: -2.5s;
+    }
+
+                                    @keyframes animate {
+                                        0 % {
+                                            transform: scale(1) translate(0, 0) rotate(0);
+                                    opacity: 0.4;
+      }
+                                    50% {
+                                        transform: scale(1.2) translate(50px, 50px) rotate(180deg);
+                                    opacity: 0.2;
+      }
+                                    100% {
+                                        transform: scale(1) translate(0, 0) rotate(360deg);
+                                    opacity: 0.4;
+      }
+    }
+
+                                    .banner h1 {
+                                        color: white;
+                                    text-align: center;
+                                    font-size: 2.5rem;
+                                    font-weight: 700;
+                                    margin: 0;
+                                    position: relative;
+                                    z-index: 1;
+    }
+
+                                    .banner p {
+                                        color: rgba(255, 255, 255, 0.9);
+                                    text-align: center;
+                                    font-size: 1.2rem;
+                                    margin: 0.5rem 0 0;
+                                    position: relative;
+                                    z-index: 1;
+    }
+
+                                    .content-card {
+                                        background: white;
+                                    border-radius: var(--border-radius);
+                                    padding: 2rem;
+                                    box-shadow: var(--card-shadow);
+                                    margin-bottom: 2rem;
+    }
+
+                                    .card-header-row {
+                                        display: flex;
+                                    justify-content: space-between;
+                                    align-items: center;
+                                    margin-bottom: 1.5rem;
+    }
+
+                                    .section-title {
+                                        color: var(--text-blue);
+                                    font-size: 1.5rem;
+                                    font-weight: 600;
+                                    margin: 0;
+    }
+
+                                    .toggle-btn {
+                                        background: none;
+                                    border: none;
+                                    color: var(--primary-blue);
+                                    font-size: 1rem;
+                                    font-weight: 500;
+                                    padding: 0;
+                                    cursor: pointer;
+                                    transition: color 0.3s ease;
+    }
+
+                                    .toggle-btn:hover {
+                                        color: var(--secondary-blue);
+    }
+
+                                    .form-control {
+                                        border: 2px solid #e1e4f5;
+                                    border-radius: 12px;
+                                    padding: 0.75rem 1rem;
+                                    font-size: 1rem;
+                                    transition: all 0.3s ease;
+    }
+
+                                    .form-control:focus {
+                                        border-color: var(--primary-blue);
+                                    box-shadow: 0 0 0 3px rgba(67, 102, 237, 0.1);
+    }
+
+                                    .form-label {
+                                        font-weight: 500;
+                                    color: #2d3748;
+                                    margin-bottom: 0.5rem;
+    }
+
+                                    .form-select {
+                                        border: 2px solid #e1e4f5;
+                                    border-radius: 12px;
+                                    padding: 0.75rem 1rem;
+                                    font-size: 1rem;
+                                    background-position: right 1rem center;
+    }
+
+                                    .form-group {
+                                        margin-bottom: 1.5rem;
+    }
+
+                                    label {
+                                        display: block;
+                                    margin-bottom: 0.5rem;
+                                    font-weight: 500;
+    }
+
+                                    input, select, textarea {
+                                        width: 100%;
+                                    padding: 0.75rem 1rem;
+                                    border: 2px solid #e1e4f5;
+                                    border-radius: 12px;
+                                    font-size: 1rem;
+                                    transition: all 0.3s ease;
+    }
+
+                                    input:focus, select:focus, textarea:focus {
+                                        outline: none;
+                                    border-color: var(--primary-blue);
+                                    box-shadow: 0 0 0 3px rgba(67, 102, 237, 0.1);
+    }
+
+                                    .input-error {
+                                        border-color: var(--error-color);
+    }
+
+                                    .error-message {
+                                        color: var(--error-color);
+                                    font-size: 0.8rem;
+                                    margin-top: 0.5rem;
+    }
+
+                                    .row {
+                                        display: flex;
+                                    flex-wrap: wrap;
+                                    margin: 0 -10px;
+    }
+
+                                    .col {
+                                        flex: 1;
+                                    padding: 0 10px;
+                                    min-width: 200px;
+    }
+
+                                    .checkbox-group {
+                                        display: flex;
+                                    align-items: center;
+                                    margin-bottom: 10px;
+    }
+
+                                    .checkbox-group input[type="checkbox"] {
+                                        width: auto;
+                                    margin-right: 10px;
+    }
+
+                                    .contact-section {
+                                        margin-bottom: 20px;
+                                    padding: 20px;
+                                    border-radius: var(--border-radius);
+                                    background-color: #f9f9ff;
+                                    border: 1px solid #e1e4f5;
+    }
+
+                                    .contact-section-title {
+                                        font-weight: 600;
+                                    margin-bottom: 15px;
+                                    color: var(--text-blue);
+                                    font-size: 1.1rem;
+    }
+
+                                    .color-picker-wrapper {
+                                        display: flex;
+                                    align-items: center;
+    }
+
+                                    .color-preview {
+                                        width: 40px;
+                                    height: 40px;
+                                    border-radius: 20px;
+                                    margin-left: 10px;
+                                    border: 1px solid #ddd;
+    }
+
+                                    .hidden {
+                                        display: none;
+    }
+
+                                    .btn-generate {
+                                        background: var(--primary-gradient);
+                                    color: white;
+                                    border: none;
+                                    border-radius: 12px;
+                                    padding: 1rem 2rem;
+                                    font-size: 1.1rem;
+                                    font-weight: 600;
+                                    width: 100%;
+                                    transition: all 0.3s ease;
+                                    position: relative;
+                                    overflow: hidden;
+                                    cursor: pointer;
+    }
+
+                                    .btn-generate:hover {
+                                    background: var(--hover-gradient);
+                                    transform: translateY(-2px);
+    }
+
+                                    .btn-generate:disabled {
+                                        opacity: 0.7;
+                                    cursor: not-allowed;
+                                    transform: none;
+    }
+
+                                    .btn-theme {
+                                        background: var(--primary-gradient);
+                                    color: white;
+                                    border: none;
+                                    border-radius: 12px;
+                                    padding: 0.75rem 1.5rem;
+                                    font-size: 1.1rem;
+                                    font-weight: 600;
+                                    transition: all 0.3s ease;
+                                    cursor: pointer;
+    }
+
+                                    .btn-theme:hover {
+                                    background: var(--hover-gradient);
+                                    transform: translateY(-2px);
+                                    color: white;
+    }
+
+                                    .btn-theme:active {
+                                        transform: translateY(0);
+    }
+
+                                    .btn-theme-outline {
+                                        background: white;
+                                    color: var(--primary-blue);
+                                    border: 2px solid var(--primary-blue);
+                                    border-radius: 12px;
+                                    padding: 0.75rem 1.5rem;
+                                    font-size: 1.1rem;
+                                    font-weight: 600;
+                                    transition: all 0.3s ease;
+                                    cursor: pointer;
+    }
+
+                                    .btn-theme-outline:hover {
+                                        background: rgba(67, 102, 237, 0.05);
+                                    color: var(--primary-blue);
+                                    transform: translateY(-2px);
+    }
+
+                                    .optional-fields {
+                                        overflow: hidden;
+                                    transition: max-height 0.3s ease-in-out;
+                                    max-height: 0;
+    }
+
+                                    .optional-fields.show {
+                                        max-height: 1000px;
+    }
+
+                                    .image-upload-area {
+                                        border: 2px dashed #e1e4f5;
+                                    border-radius: var(--border-radius);
+                                    padding: 2rem;
+                                    text-align: center;
+                                    margin-bottom: 1.5rem;
+                                    cursor: pointer;
+                                    transition: all 0.3s ease;
+    }
+
+                                    .image-upload-area:hover {
+                                        border-color: var(--primary-blue);
+                                    background-color: rgba(67, 102, 237, 0.03);
+    }
+
+                                    .image-upload-icon {
+                                        font-size: 3rem;
+                                    color: var(--primary-blue);
+                                    margin-bottom: 1rem;
+                                    opacity: 0.5;
+    }
+
+                                    .image-preview-container {
+                                        text-align: center;
+                                    margin-top: 1rem;
+    }
+
+                                    .image-preview {
+                                        max-width: 100%;
+                                    max-height: 200px;
+                                    border-radius: 8px;
+                                    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+    }
+
+                                    .success-message {
+                                        background-color: #e6f4ea;
+                                    color: var(--success-color);
+                                    padding: 15px;
+                                    border-radius: var(--border-radius);
+                                    margin-bottom: 20px;
+                                    display: flex;
+                                    align-items: center;
+    }
+
+                                    .success-message i {
+                                        margin-right: 10px;
+                                    font-size: 24px;
+    }
+
+                                    .qr-code-container {
+                                        display: flex;
+                                    flex-direction: column;
+                                    align-items: center;
+                                    margin-top: 20px;
+    }
+
+                                    .qr-code-image {
+                                        width: 250px;
+                                    height: 250px;
+                                    margin-bottom: 20px;
+    }
+
+                                    .action-buttons {
+                                        display: flex;
+                                    gap: 15px;
+                                    margin-top: 20px;
+                                    justify-content: center;
+    }
+
+                                    .action-button {
+                                        display: flex;
+                                    align-items: center;
+                                    justify-content: center;
+                                    gap: 8px;
+                                    padding: 0.75rem 1.5rem;
+                                    border-radius: 12px;
+                                    cursor: pointer;
+                                    font-weight: 500;
+                                    transition: all 0.3s ease;
+    }
+
+                                    .action-button i {
+                                        font-size: 1.2rem;
+    }
+
+                                    .result-title {
+                                        color: var(--text-blue);
+                                    font-size: 1.5rem;
+                                    font-weight: 600;
+                                    text-align: center;
+                                    margin-bottom: 1.5rem;
+    }
+
+                                    .appointment-details {
+                                        background: #f9f9ff;
+                                    border-radius: 12px;
+                                    padding: 1.5rem;
+                                    margin: 1.5rem 0;
+                                    border: 1px solid #e1e4f5;
+    }
+
+                                    .details-row {
+                                        display: flex;
+                                    margin-bottom: 0.8rem;
+    }
+
+                                    .details-label {
+                                        font-weight: 500;
+                                    color: var(--text-blue);
+                                    width: 140px;
+                                    flex-shrink: 0;
+    }
+
+                                    .details-value {
+                                        flex-grow: 1;
+    }
+                                    /* Updated Navigation Styling to match screenshot */
+                                    .navigation-container {
+                                        max-width: 800px;
+                                    margin: 0 auto 2rem;
+                                    padding: 0;
+  }
+
+                                    .navigation-tabs {
+                                        background-color: white;
+                                    border-radius: var(--border-radius);
+                                    box-shadow: var(--card-shadow);
+                                    display: flex;
+                                    margin-top: -1rem;
+                                    overflow: hidden;
+  }
+
+                                    .nav-tab {
+                                        align-items: center;
+                                    background-color: white;
+                                    color: #5f6368;
+                                    display: flex;
+                                    flex: 1;
+                                    font-size: 1.1rem;
+                                    font-weight: 500;
+                                    justify-content: center;
+                                    padding: 1.5rem;
+                                    position: relative;
+                                    text-decoration: none;
+                                    transition: all 0.3s ease;
+  }
+
+                                    .nav-tab i {
+                                        font-size: 1.4rem;
+                                    margin-right: 10px;
+                                    opacity: 0.8;
+  }
+
+                                    .nav-tab:hover {
+                                        color: var(--primary-blue);
+  }
+
+                                    .nav-tab.active {
+                                        color: var(--primary-blue);
+  }
+
+                                    .nav-tab.active::after {
+                                        background: var(--primary-blue);
+                                    bottom: 0;
+                                    content: '';
+                                    height: 4px;
+                                    left: 0;
+                                    position: absolute;
+                                    width: 100%;
+  }
+
+                                    /* Adjust spacing for banner and first card */
+                                    .banner {
+                                        margin-bottom: 1.5rem;
+  }
+
+                                    .content-card:first-of-type {
+                                        margin-top: 2rem;
+  }
+
+                                    /* Make provider tools section match the styling */
+                                    #provider-section {
+                                        margin-top: 2rem;
+  }
+
+                                    /* Adjust the load appointments button */
+                                    #load-appointments {
+                                        align-items: center;
+                                    background-color: var(--primary-blue);
+                                    border: none;
+                                    border-radius: 25px;
+                                    color: white;
+                                    display: inline-flex;
+                                    font-size: 1.1rem;
+                                    font-weight: 500;
+                                    justify-content: center;
+                                    margin-top: 15px;
+                                    padding: 0.9rem 1.5rem;
+                                    text-decoration: none;
+                                    transition: all 0.3s ease;
+  }
+
+                                    #load-appointments i {
+                                        font-size: 1.3rem;
+                                    margin-right: 8px;
+  }
+
+                                    #load-appointments:hover {
+                                        background-color: var(--primary-dark);
+                                    transform: translateY(-2px);
+  }
+
+                                    /* Responsive adjustments */
+                                    @media (max-width: 600px) {
+    .nav - tab {
+                                        padding: 1.2rem 1rem;
+    }
+
+                                    .nav-tab span {
+                                        font-size: 0.9rem;
+    }
+  }
+                                </style>
+                            </head>
+                            <body>
+                                <div class="main-container">
+                                    <!-- Animated Banner -->
+                                    <div class="banner">
+                                        <h1>Appointment Management System</h1>
+                                        <p>Schedule and manage appointments efficiently</p>
+                                    </div>
+                                    <!-- Navigation Links -->
+                                    <div class="navigation-container">
+                                        <div class="navigation-tabs">
+                                            <a href="#" class="nav-tab active">
+                                                <i class="material-icons">add_circle_outline</i>
+                                                <span>New Appointment</span>
+                                            </a>
+                                            <a href="<?!= getScriptUrl() ?>?page=appointments" class="nav-tab">
+                                                <i class="material-icons">event_note</i>
+                                                <span>All Appointments</span>
+                                            </a>
+                                        </div>
+                                    </div>
+                                    <!-- Form Section -->
+                                    <div id="form-section">
+                                        <form id="appointment-form" onsubmit="return ix_handleFormSubmit()">
+
+                                            <!-- Add this right after the banner div, before the form-section div -->
+                                            <div class="content-card" id="provider-section">
+                                                <div class="card-header-row">
+                                                    <h2 class="section-title">Provider Tools</h2>
+                                                </div>
+
+                                                <p id="provider-email-display">Current provider: <span id="current-email">Loading...</span></p>
+
+                                                <div class="form-group" id="appointment-selector-container" style="display: none; margin-top: 15px;">
+                                                    <label for="appointment-selector">Select an appointment to load:</label>
+                                                    <select id="appointment-selector" class="form-select"></select>
+                                                </div>
+
+                                                <div class="action-buttons" style="margin-top: 15px;">
+                                                    <button type="button" id="load-appointments" class="btn-theme">
+                                                        <i class="material-icons" style="margin-right: 5px;">event</i>
+                                                        Load My Appointments
+                                                    </button>
+                                                </div>
+                                            </div>
+                                            <!-- Required Details & Location Card -->
+                                            <div class="content-card">
+                                                <div class="card-header-row">
+                                                    <h2 class="section-title">Required Details</h2>
+                                                </div>
+
+                                                <div class="row">
+                                                    <div class="col">
+                                                        <div class="form-group">
+                                                            <label for="service">Service Type *</label>
+                                                            <select id="service" name="service" required>
+                                                                <option value="">Select a service</option>
+                                                                <!-- Dynamically populated from getServiceTypes() -->
+                                                            </select>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col">
+                                                        <div class="form-group">
+                                                            <label for="other-service">Other (specify)</label>
+                                                            <input type="text" id="other-service" name="other-service" disabled>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <div class="row">
+                                                    <div class="col">
+                                                        <div class="form-group">
+                                                            <label for="date">Date *</label>
+                                                            <input type="date" id="date" name="date" required>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col">
+                                                        <div class="form-group">
+                                                            <label for="time">Time *</label>
+                                                            <input type="time" id="time" name="time" required>
+                                                        </div>
+                                                    </div>
+                                                </div>
+
+                                                <!-- Add this inside the Required Details card, right after the date and time row -->
+                                                <div class="row">
+                                                    <div class="col">
+                                                        <div class="form-group">
+                                                            <label for="duration_type">Appointment Duration *</label>
+                                                            <select id="duration_type" name="duration_type" class="form-select" required>
+                                                                <option value="">Select duration</option>
+                                                                <option value="15">15 minutes</option>
+                                                                <option value="30">30 minutes</option>
+                                                                <option value="45">45 minutes</option>
+                                                                <option value="60">1 hour</option>
+                                                                <option value="90">1.5 hours</option>
+                                                                <option value="120">2 hours</option>
+                                                                <option value="180">3 hours</option>
+                                                                <option value="custom">Custom duration</option>
+                                                            </select>
+                                                        </div>
+                                                    </div>
+
+                                                    <div class="col">
+                                                        <div id="custom-duration-field" style="display: none;">
+                                                            <div class="form-group">
+                                                                <label for="custom_duration_value">Custom Duration (minutes) *</label>
+                                                                <input type="number" id="custom_duration_value" name="custom_duration_value" min="1" value="60">
+                                                            </div>
+                                                        </div>
+                                                    </div>
+                                                </div>
+                                                <input type="hidden" id="duration" name="duration" value="60">
+
+
+                                                    <!-- Location Details -->
+                                                    <div class="card-header-row" style="margin-top: 20px;">
+                                                        <h3 class="section-title" style="font-size: 1.2rem;">Location Details</h3>
+                                                    </div>
+
+                                                    <div class="form-group">
+                                                        <label for="address-select">Select Address *</label>
+                                                        <select id="address-select" name="address-select" required>
+                                                            <option value="">Select an address</option>
+                                                            <option value="417 Hoboken Ave, Jersey City, NJ, 07306, USA">417 Hoboken Ave, Jersey City, NJ</option>
+                                                            <option value="400 Lafayette Street, New York City, NY, 10003, USA">400 Lafayette Street, 4th floor, New York City, NY</option>
+                                                            <option value="4182 Isola Drive, Fremont, CA, 94555, USA">4182 Isola Drive, Fremont, CA</option>
+                                                            <option value="custom">Custom Address</option>
+                                                        </select>
+                                                    </div>
+
+                                                    <div id="custom-address-fields" style="display: none;">
+                                                        <div class="form-group">
+                                                            <label for="street">Street Address *</label>
+                                                            <input type="text" id="street" name="street">
+                                                        </div>
+
+                                                        <div class="row">
+                                                            <div class="col">
+                                                                <div class="form-group">
+                                                                    <label for="city">City *</label>
+                                                                    <input type="text" id="city" name="city">
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="col">
+                                                                <div class="form-group">
+                                                                    <label for="state">State *</label>
+                                                                    <select id="state" name="state">
+                                                                        <option value="">Select state</option>
+                                                                        <!-- Dynamically populated from getUsStates() -->
+                                                                    </select>
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="col">
+                                                                <div class="form-group">
+                                                                    <label for="zip">ZIP Code *</label>
+                                                                    <input type="text" id="zip" name="zip" pattern="\d{5}" title="Five digit ZIP code">
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <input type="hidden" id="address" name="address">
+                                                    </div>
+
+                                                    <!-- Contact Details Card -->
+                                                    <div class="content-card">
+                                                        <div class="card-header-row">
+                                                            <h2 class="section-title">Contact Details</h2>
+                                                        </div>
+
+                                                        <!-- Host Section -->
+                                                        <div class="contact-section">
+                                                            <div class="contact-section-title">Host Information</div>
+
+                                                            <div class="form-group">
+                                                                <label for="host_name">Host Name *</label>
+                                                                <input type="text" id="host_name" name="host_name" required>
+                                                            </div>
+
+                                                            <div class="row">
+                                                                <div class="col">
+                                                                    <div class="form-group">
+                                                                        <label for="host_email">Host Email</label>
+                                                                        <input type="email" id="host_email" name="host_email">
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col">
+                                                                    <div class="form-group">
+                                                                        <label for="host_phone">Host Phone *</label>
+                                                                        <input type="tel" id="host_phone" name="host_phone" pattern="[0-9]{10}" title="10 digits only" required>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="row">
+                                                                <div class="col">
+                                                                    <div class="checkbox-group">
+                                                                        <input type="checkbox" id="send_email_host" name="send_email_host">
+                                                                            <label for="send_email_host">Send Email Notification</label>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col">
+                                                                    <div class="checkbox-group">
+                                                                        <input type="checkbox" id="send_sms_host" name="send_sms_host">
+                                                                            <label for="send_sms_host">Send SMS Notification</label>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+
+                                                        <!-- Client Section -->
+                                                        <div class="contact-section">
+                                                            <div class="contact-section-title">Client Information</div>
+
+                                                            <div class="form-group">
+                                                                <label for="client_name">Client Name *</label>
+                                                                <input type="text" id="client_name" name="client_name" required>
+                                                            </div>
+
+                                                            <div class="row">
+                                                                <div class="col">
+                                                                    <div class="form-group">
+                                                                        <label for="client_email">Client Email</label>
+                                                                        <input type="email" id="client_email" name="client_email">
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col">
+                                                                    <div class="form-group">
+                                                                        <label for="client_phone">Client Phone *</label>
+                                                                        <input type="tel" id="client_phone" name="client_phone" pattern="[0-9]{10}" title="10 digits only" required>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            <div class="row">
+                                                                <div class="col">
+                                                                    <div class="checkbox-group">
+                                                                        <input type="checkbox" id="send_email_client" name="send_email_client">
+                                                                            <label for="send_email_client">Send Email Notification</label>
+                                                                    </div>
+                                                                </div>
+
+                                                                <div class="col">
+                                                                    <div class="checkbox-group">
+                                                                        <input type="checkbox" id="send_sms_client" name="send_sms_client">
+                                                                            <label for="send_sms_client">Send SMS Notification</label>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+                                                        </div>
+                                                    </div>
+
+                                                    <!-- Optional Details Card -->
+
+                                                    <div class="content-card">
+                                                        <div class="card-header-row">
+                                                            <h2 class="section-title">Optional Details</h2>
+                                                            <a href="#" id="toggle-optional" class="toggle-btn">
+                                                                <span id="toggle-text">Show</span>
+                                                            </a>
+                                                        </div>
+
+                                                        <div id="optional-content" style="max-height: 0; overflow: hidden; transition: max-height 0.3s ease-in-out;">
+                                                            <!-- Add this inside the optional-content div in the Optional Details card -->
+                                                            <div class="form-group">
+                                                                <label for="notification_time_type">Send Apple Pass Notification</label>
+                                                                <select id="notification_time_type" name="notification_time_type" class="form-select">
+                                                                    <option value="10">Before 10 minutes</option>
+                                                                    <option value="30">Before 30 minutes</option>
+                                                                    <option value="60">Before 1 hour</option>
+                                                                    <option value="1440">Before 1 day</option>
+                                                                    <option value="custom">Custom time</option>
+                                                                </select>
+                                                            </div>
+
+                                                            <div id="custom-notification-time" style="display: none;">
+                                                                <div class="row">
+                                                                    <div class="col">
+                                                                        <div class="form-group">
+                                                                            <label for="custom_notification_value">Time value</label>
+                                                                            <input type="number" id="custom_notification_value" name="custom_notification_value" min="1" value="10">
+                                                                        </div>
+                                                                    </div>
+                                                                    <div class="col">
+                                                                        <div class="form-group">
+                                                                            <label for="custom_notification_unit">Unit</label>
+                                                                            <select id="custom_notification_unit" name="custom_notification_unit" class="form-select">
+                                                                                <option value="1">Minutes</option>
+                                                                                <option value="60">Hours</option>
+                                                                                <option value="1440">Days</option>
+                                                                                <option value="10080">Weeks</option>
+                                                                            </select>
+                                                                        </div>
+                                                                    </div>
+                                                                </div>
+                                                            </div>
+
+                                                            <input type="hidden" id="notification_time" name="notification_time" value="10">
+                                                                <!-- Background Color -->
+                                                                <div class="form-group">
+                                                                    <label for="background_color">Background Color</label>
+                                                                    <div class="color-picker-wrapper">
+                                                                        <input type="color" id="background_color" name="background_color" value="#2908b9">
+                                                                            <div id="color-preview" class="color-preview" style="background-color: rgb(41, 8, 185);"></div>
+                                                                    </div>
+                                                                    <input type="hidden" id="rgb_color" name="rgb_color">
+                                                                </div>
+
+                                                                <!-- Notes -->
+                                                                <div class="form-group">
+                                                                    <label for="notes">Notes</label>
+                                                                    <textarea id="notes" name="notes" rows="4"></textarea>
+                                                                </div>
+
+                                                                <!-- Image Upload -->
+                                                                <div class="form-group">
+                                                                    <label>Image Upload</label>
+                                                                    <div id="image-upload-area" class="image-upload-area">
+                                                                        <i class="material-icons image-upload-icon">add_photo_alternate</i>
+                                                                        <p>Click to upload an image or drag and drop</p>
+                                                                        <input type="file" id="image-upload" name="image-upload" accept="image/*" style="display: none;">
+                                                                    </div>
+
+                                                                    <div id="image-preview-container" class="hidden">
+                                                                        <img id="image-preview" class="image-preview">
+                                                                            <p id="image-name"></p>
+                                                                            <button type="button" id="remove-image" class="btn-theme-outline" style="margin-top: 10px;">Remove Image</button>
+                                                                    </div>
+
+                                                                    <input type="hidden" id="image_drive_id" name="image_drive_id">
+                                                                        <input type="hidden" id="image_name" name="image_name">
+                                                                        </div>
+                                                                </div>
+                                                        </div>
+
+                                                        <!-- Image Upload Card -->
+                                                        <!-- <div class="content-card">
+                                                            <div class="card-header-row">
+                                                                <h2 class="section-title">Image Upload</h2>
+                                                            </div>
+
+                                                            <div id="image-upload-area" class="image-upload-area">
+                                                                <i class="material-icons image-upload-icon">add_photo_alternate</i>
+                                                                <p>Click to upload an image or drag and drop</p>
+                                                                <input type="file" id="image-upload" name="image-upload" accept="image/*" style="display: none;">
+                                                            </div>
+
+                                                            <div id="image-preview-container" class="hidden">
+                                                                <img id="image-preview" class="image-preview">
+                                                                    <p id="image-name"></p>
+                                                                    <button type="button" id="remove-image" class="btn-theme-outline" style="margin-top: 10px;">Remove Image</button>
+                                                            </div>
+
+                                                            <input type="hidden" id="image_drive_id" name="image_drive_id">
+                                                                <input type="hidden" id="image_name" name="image_name">
+                                                                </div> -->
+
+                                                                <button type="submit" class="btn-generate">Schedule Appointment</button>
+                                                            </form>
+                                                        </div>
+
+                                                        <!-- Success Section (initially hidden) -->
+                                                        <div id="success-section" class="hidden">
+                                                            <div class="success-message">
+                                                                <i class="material-icons">check_circle</i>
+                                                                <span>Appointment scheduled successfully!</span>
+                                                            </div>
+
+                                                            <div class="content-card">
+                                                                <h2 class="result-title">Your Appointment Details</h2>
+
+                                                                <div class="appointment-details" id="appointment-summary">
+                                                                    <!-- Details will be filled dynamically -->
+                                                                </div>
+
+                                                                <div class="qr-code-container" id="qr-code-container">
+                                                                    <img id="qr-code-image" class="qr-code-image">
+                                                                        <p>Scan this QR code for appointment details</p>
+                                                                </div>
+
+                                                                <div class="action-buttons">
+                                                                    <button class="btn-theme-outline" onclick="sendNotification('email')">
+                                                                        <i class="material-icons">email</i>
+                                                                        Send via Email
+                                                                    </button>
+
+                                                                    <button class="btn-theme-outline" onclick="sendNotification('sms')">
+                                                                        <i class="material-icons">sms</i>
+                                                                        Send via SMS
+                                                                    </button>
+                                                                </div>
+                                                            </div>
+
+                                                            <button class="btn-generate" onclick="resetForm()">Schedule Another Appointment</button>
+                                                        </div>
+                                                    </div>
+
+                                                    <script>
+                                                       
+                                                        // Global variable to store all users
+                                                        var allUsers = [];
+                                                        var imageUploadInProgress = false;
+                                                    </script>
+
+                                                    <?!= includeJS("IndexJS"); ?>
+                                                    <?!= includeHtml("ASDomEvents"); ?>
+                                                     
+                                                </body>
+                                            </html>
+
+

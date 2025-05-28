@@ -1,0 +1,4 @@
+<!-- AmsDomEvent.html -->       
+<script>
+    document.addEventListener("DOMContentLoaded",ix_initializeForm)
+</script>

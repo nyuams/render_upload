@@ -5,8 +5,15 @@ const sharp = require('sharp');
 const PKPass = require('passkit-generator').PKPass;
 const path = require('path');
 const fs = require('fs');
-
 const app = express();
+const jwt = require('jsonwebtoken');
+const isProduction = false;
+const webhookUrl = 'https://script.google.com/macros/s/AKfycbxt2NRp1gKGPxfw_oRi5St790zlvxHrZbS2pHToymSNsUqAJYTkCfVgpB8WMf1WHddc/exec'; // Replace with actual
+const secretKey = 'e96bef517bec7bdc76803a2813169ea6'; // Must match what you use in Apps Script
+// Define your base prefix
+const BASE_URL = isProduction
+  ? "https://render-upload-qy2q.onrender.com/"  //production link
+  : "https://6ec2-74-101-4-223.ngrok-free.app"; //test ngrok server : must be replaced if ngrok reloaded
 
 // Middleware
 app.use(express.json({ limit: '50mb' }));  // Increased limit for base64 images
@@ -141,6 +148,7 @@ function cleanupFiles(files) {
     });
 }
 
+
 // Main pass generation endpoint
 app.post('/generate-pass', async (req, res) => {
     const filesToCleanup = [];
@@ -188,6 +196,20 @@ app.post('/generate-pass', async (req, res) => {
         // Read and update pass.json
         let passJson = JSON.parse(fs.readFileSync(path.join(__dirname, 'models/pass.json')));
         
+        const crypto = require('crypto'); // Ensure at top of your file if not already
+
+        // Inject passTypeIdentifier
+        passJson.passTypeIdentifier = "pass.com.techchallenge.nyu";
+
+        // Generate a secure random auth token
+        const authToken = crypto.randomBytes(32).toString('hex');
+        passJson.authenticationToken = authToken;
+
+
+        passJson.webServiceURL = `${BASE_URL}/api/v1/passes`;
+
+        console.log("webServiceURL",`${BASE_URL}/api/v1/passes`)
+
         // Update serial number
         passJson.serialNumber = uniqueId;
         
@@ -351,8 +373,14 @@ app.post('/generate-pass', async (req, res) => {
             success: true,
             passUrl: downloadUrl,
             passId: uniqueId,
-            notificationTime: passJson.relevantDate
+            notificationTime: passJson.relevantDate,
+            authenticationToken: authToken,
+            passTypeIdentifier: passJson.passTypeIdentifier,
+            serialNumber: uniqueId,
+            webServiceURL: passJson.webServiceURL,
+            updatedAt: new Date().toISOString()
         });
+        
     } catch (error) {
         // Clean up files in case of error
         cleanupFiles(filesToCleanup);
@@ -365,8 +393,142 @@ app.post('/generate-pass', async (req, res) => {
     }
 });
 
+
+    
+
+
+
+function generateAPNsJWT() {
+  const teamId = 'A3MC85T4RA';
+  const keyId = '5HJ34C893S';
+  const passTypeId = 'pass.com.techchallenge.nyu';
+
+  const privateKey = fs.readFileSync(path.join(__dirname, 'certs', 'AuthKey_5HJ34C893S.p8'));
+
+  const token = jwt.sign({}, privateKey, {
+    algorithm: 'ES256',
+    issuer: teamId,
+    header: {
+      alg: 'ES256',
+      kid: keyId
+    },
+    expiresIn: '20m', // Apple requires tokens to be short-lived
+    audience: 'https://api.push.apple.com'
+  });
+
+  return {
+    jwt: token,
+    topic: `${passTypeId}`
+  };
+}
+
+
+app.get('/test-push-token', async (req, res) => {
+    const testPayload = {
+      serialNumber: '1747974852983',           // Replace with a known serial from your sheet
+      deviceLibraryIdentifier:'testtoken',
+      pushToken: 'test_push_token_ABC123'   // Dummy token for test
+    };
+  
+    
+  
+    try {
+      const response = await fetch(`${webhookUrl}?key=${secretKey}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(testPayload)
+      });
+  
+      const text = await response.text();
+      res.status(response.status).send(`Webhook responded: ${response.status} - ${text}`);
+    } catch (err) {
+      console.error('Error sending test webhook:', err);
+      res.status(500).send('Error sending test webhook');
+    }
+  });
+  
+  
+
+app.post('/api/v1/passes/v1/devices/:deviceLibraryIdentifier/registrations/:passTypeIdentifier/:serialNumber', async (req, res) => {
+
+  const { deviceLibraryIdentifier, passTypeIdentifier, serialNumber } = req.params;
+  const authHeader = req.headers.authorization;
+    console.log("✅ Apple Wallet callback received");
+    console.log("Headers:", req.headers);
+    console.log("Params:", req.params);
+    console.log("Body:", req.body);
+  // ✅ Verify the Authorization header
+  if (!authHeader || !authHeader.startsWith('ApplePass ')) {
+    return res.status(401).send('Unauthorized - Missing or invalid ApplePass token');
+  }
+  const { pushToken } = req.body;
+
+    if (!pushToken) {
+    return res.status(400).send('Bad Request - Missing pushToken');
+    }
+  const providedToken = authHeader.replace('ApplePass ', '').trim();
+
+
+  const payload = {
+    serialNumber,
+    deviceLibraryIdentifier,
+    pushToken
+  };
+
+  try {
+    const webhookResponse = await fetch(`${webhookUrl}?key=${secretKey}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+
+    if (webhookResponse.ok) {
+      console.log(`✅ Push token sent to Apps Script for serial: ${serialNumber}`);
+      return res.status(201).send('Device registered successfully');
+    } else {
+      console.warn(`⚠️ Apps Script responded with status ${webhookResponse.status}`);
+      return res.status(502).send('Failed to forward push token to Apps Script');
+    }
+  } catch (error) {
+    console.error('❌ Error forwarding push token:', error);
+    return res.status(500).send('Internal Server Error');
+  }
+});
+
+app.post('*', express.json(), (req, res, next) => {
+  console.log('🌐 POST request received');
+  console.log('➡️ Path:', req.path);
+  console.log('➡️ Headers:', req.headers);
+  console.log('➡️ Body:', req.body);
+  next(); // Continue to the correct route
+});
+
+
 // Start server
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, '0.0.0.0', () => {
     console.log(`Server running on port ${PORT}`);
+});
+
+
+app.post('/api/v1/push-update', async (req, res) => {
+  const { deviceLibraryIdentifier, pushToken, passTypeIdentifier, serialNumber } = req.body;
+
+  const jwt = generateAPNsJWT(); // Using your p8 key + team ID + key ID
+
+  const response = await fetch(`https://api.push.apple.com/3/device/${pushToken}`, {
+    method: 'POST',
+    headers: {
+      'authorization': `bearer ${jwt}`,
+      'apns-topic': `${passTypeIdentifier}`,  // e.g. pass.com.techchallenge.nyu
+    }
+  });
+
+  if (response.status === 200) {
+    console.log(`✅ Push sent to ${serialNumber}`);
+    res.status(200).json({ success: true });
+  } else {
+    console.warn(`⚠️ Push failed: ${response.status}`);
+    res.status(response.status).json({ success: false });
+  }
 });

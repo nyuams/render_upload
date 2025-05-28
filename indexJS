@@ -1,0 +1,1794 @@
+// Initialize form elements
+function ix_initializeForm() {
+    ix_setupDurationField();
+    ix_setupAutocomplete();
+    // Setup notification time selection
+    const notificationTimeType = document.getElementById('notification_time_type');
+    const customNotificationTime = document.getElementById('custom-notification-time');
+    const customNotificationValue = document.getElementById('custom_notification_value');
+    const customNotificationUnit = document.getElementById('custom_notification_unit');
+    const notificationTimeField = document.getElementById('notification_time');
+
+    // When notification type changes
+    notificationTimeType.addEventListener('change', function () {
+        if (this.value === 'custom') {
+            // Show custom time fields
+            customNotificationTime.style.display = 'block';
+            // Calculate notification time based on custom values
+            calculateNotificationTime();
+        } else {
+            // Hide custom time fields
+            customNotificationTime.style.display = 'none';
+            // Set notification time directly from dropdown
+            notificationTimeField.value = this.value;
+        }
+    });
+
+    // When custom time values change
+    customNotificationValue.addEventListener('input', ix_calculateNotificationTime);
+    customNotificationUnit.addEventListener('change', ix_calculateNotificationTime);
+
+    function ix_calculateNotificationTime() {
+        if (notificationTimeType.value === 'custom') {
+            const value = parseInt(customNotificationValue.value) || 10;
+            const unit = parseInt(customNotificationUnit.value) || 1;
+            const notificationTimeInMinutes = value * unit;
+            notificationTimeField.value = notificationTimeInMinutes;
+        }
+    }
+
+    // Setup address dropdown
+    document.getElementById('address-select').addEventListener('change', function () {
+        const customAddressFields = document.getElementById('custom-address-fields');
+
+        if (this.value === 'custom') {
+            // Show custom address fields
+            customAddressFields.style.display = 'block';
+
+            // Make custom fields required
+            document.getElementById('street').required = true;
+            document.getElementById('city').required = true;
+            document.getElementById('state').required = true;
+            document.getElementById('zip').required = true;
+
+            // Clear the full address until custom fields are filled
+            document.getElementById('address').value = '';
+        } else if (this.value) {
+            // Hide custom address fields
+            customAddressFields.style.display = 'none';
+
+            // Make custom fields not required
+            document.getElementById('street').required = false;
+            document.getElementById('city').required = false;
+            document.getElementById('state').required = false;
+            document.getElementById('zip').required = false;
+
+            // Set the full address directly from selection
+            document.getElementById('address').value = this.value;
+        } else {
+            // No selection, hide custom fields
+            customAddressFields.style.display = 'none';
+
+            // Make custom fields not required
+            document.getElementById('street').required = false;
+            document.getElementById('city').required = false;
+            document.getElementById('state').required = false;
+            document.getElementById('zip').required = false;
+
+            // Clear the address
+            document.getElementById('address').value = '';
+        }
+    });
+
+    // Use the existing updateFullAddress function for custom fields
+    // Simply add these event listeners to the street, city, state, zip fields
+    document.getElementById('street').addEventListener('input', ix_updateFullAddress);
+    document.getElementById('city').addEventListener('input', ix_updateFullAddress);
+    document.getElementById('state').addEventListener('input', ix_updateFullAddress);
+    document.getElementById('zip').addEventListener('input', ix_updateFullAddress);
+
+
+    // Add this to your initializeForm function
+    // Setup optional details toggle
+    const toggleOptionalBtn = document.getElementById('toggle-optional');
+    const optionalContent = document.getElementById('optional-content');
+    const toggleText = document.getElementById('toggle-text');
+
+    toggleOptionalBtn.addEventListener('click', function (e) {
+        e.preventDefault(); // Prevent the default anchor behavior
+
+        if (optionalContent.style.maxHeight === '0px' || optionalContent.style.maxHeight === '') {
+            // Show the content
+            optionalContent.style.maxHeight = '1000px'; // Set a large enough value
+            toggleText.textContent = 'Hide';
+        } else {
+            // Hide the content
+            optionalContent.style.maxHeight = '0px';
+            toggleText.textContent = 'Show';
+        }
+    });
+    // Populate service types dropdown
+    google.script.run.withSuccessHandler(ix_populateServiceTypes).getServiceTypes();
+
+    // Populate US states dropdown
+    google.script.run.withSuccessHandler(ix_populateUsStates).getUsStates();
+
+    // Setup service type dropdown to enable/disable "Other" field
+    document.getElementById('service').addEventListener('change', function () {
+        const otherServiceField = document.getElementById('other-service');
+        if (this.value === 'Other') {
+            otherServiceField.disabled = false;
+            otherServiceField.required = true;
+        } else {
+            otherServiceField.disabled = true;
+            otherServiceField.required = false;
+            otherServiceField.value = '';
+        }
+    });
+
+    // Setup background color picker
+    const colorPicker = document.getElementById('background_color');
+    const colorPreview = document.getElementById('color-preview');
+    const rgbColorInput = document.getElementById('rgb_color');
+
+    // Initialize with default color
+    const defaultColor = colorPicker.value;
+    const defaultRgb = ix_hexToRgb(defaultColor);
+    rgbColorInput.value = `rgb(${defaultRgb.r}, ${defaultRgb.g}, ${defaultRgb.b})`;
+
+    colorPicker.addEventListener('input', function () {
+        const hexColor = this.value;
+        const rgb = ix_hexToRgb(hexColor);
+        const rgbString = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+
+        colorPreview.style.backgroundColor = rgbString;
+        rgbColorInput.value = rgbString;
+    });
+
+    // Setup image upload
+    const imageUploadArea = document.getElementById('image-upload-area');
+    const imageUploadInput = document.getElementById('image-upload');
+    const imagePreviewContainer = document.getElementById('image-preview-container');
+    const imagePreview = document.getElementById('image-preview');
+    const imageName = document.getElementById('image-name');
+
+    imageUploadArea.addEventListener('click', function () {
+        imageUploadInput.click();
+    });
+
+    imageUploadArea.addEventListener('dragover', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.style.borderColor = 'var(--primary-color)';
+    });
+
+    imageUploadArea.addEventListener('dragleave', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.style.borderColor = '#ddd';
+    });
+
+    imageUploadArea.addEventListener('drop', function (e) {
+        e.preventDefault();
+        e.stopPropagation();
+        this.style.borderColor = '#ddd';
+
+        const file = e.dataTransfer.files[0];
+        ix_handleImageUpload(file);
+    });
+
+    imageUploadInput.addEventListener('change', function () {
+        if (this.files && this.files[0]) {
+            ix_handleImageUpload(this.files[0]);
+        }
+    });
+
+    // Setup address fields to combine into single address
+    const streetInput = document.getElementById('street');
+    const cityInput = document.getElementById('city');
+    const stateInput = document.getElementById('state');
+    const zipInput = document.getElementById('zip');
+    const addressInput = document.getElementById('address');
+
+    [streetInput, cityInput, stateInput, zipInput].forEach(input => {
+        input.addEventListener('input', ix_updateFullAddress);
+    });
+
+    // Setup remove image button
+    document.getElementById('remove-image').addEventListener('click', function () {
+        // Clear the preview
+        document.getElementById('image-preview').src = '';
+        document.getElementById('image-name').textContent = '';
+
+        // Clear the hidden fields
+        document.getElementById('image_drive_id').value = '';
+        document.getElementById('image_name').value = '';
+
+        // Hide preview container and show upload area
+        document.getElementById('image-preview-container').classList.add('hidden');
+        document.getElementById('image-upload-area').classList.remove('hidden');
+
+        // Reset the file input
+        document.getElementById('image-upload').value = '';
+    });
+
+
+    // Add this line at the end of your existing initializeForm function:
+    ix_displayCurrentUserEmail();
+    document.getElementById('load-appointments').addEventListener('click', ix_loadAppointments);
+}
+
+// Function to load all users when the page loads
+function ix_loadAllUsers() {
+  google.script.run
+    .withSuccessHandler(function(result) {
+      if (result.success && result.users) {
+        allUsers = result.users;
+        console.log('Loaded ' + allUsers.length + ' users for instant suggestions');
+      } else {
+        console.error('Error loading users:', result.message || 'Unknown error');
+      }
+    })
+    .withFailureHandler(function(error) {
+      console.error('Error loading users:', error);
+    })
+    .getAllUsers();
+}
+
+// Setup autocomplete for contact fields
+function ix_setupAutocomplete() {
+  // Add CSS for suggestions if not already added
+  if (!document.getElementById('suggestion-styles')) {
+    const style = document.createElement('style');
+    style.id = 'suggestion-styles';
+    style.textContent = `
+      .suggestion-list {
+        background-color: white;
+        border: 1px solid #e1e4f5;
+        border-radius: 12px;
+        box-shadow: 0 8px 32px rgba(67, 102, 237, 0.1);
+        max-height: 200px;
+        overflow-y: auto;
+        position: absolute;
+        z-index: 1000;
+        width: 100%;
+        margin-top: 2px;
+      }
+      .suggestion-item {
+        padding: 10px 15px;
+        cursor: pointer;
+        transition: background-color 0.2s;
+        border-bottom: 1px solid #f0f2f9;
+      }
+      .suggestion-item:last-child {
+        border-bottom: none;
+      }
+      .suggestion-item:hover {
+        background-color: rgba(67, 102, 237, 0.1);
+      }
+    `;
+    document.head.appendChild(style);
+  }
+
+  // Host fields
+  ix_setupFieldAutocomplete('host_name', 'name', ['host_name', 'host_email', 'host_phone']);
+  ix_setupFieldAutocomplete('host_email', 'email', ['host_name', 'host_email', 'host_phone']);
+  ix_setupFieldAutocomplete('host_phone', 'phone', ['host_name', 'host_email', 'host_phone']);
+  
+  // Client fields
+  ix_setupFieldAutocomplete('client_name', 'name', ['client_name', 'client_email', 'client_phone']);
+  ix_setupFieldAutocomplete('client_email', 'email', ['client_name', 'client_email', 'client_phone']);
+  ix_setupFieldAutocomplete('client_phone', 'phone', ['client_name', 'client_email', 'client_phone']);
+
+  // Load all users data
+  ix_loadAllUsers();
+}
+
+// Configure autocomplete for a specific field
+function ix_setupFieldAutocomplete(fieldId, searchField, relatedFields) {
+  const field = document.getElementById(fieldId);
+  if (!field) {
+    console.error('Field not found:', fieldId);
+    return;
+  }
+
+  // Create suggestion list container
+  const listId = fieldId + '-suggestions';
+  let suggestionList = document.getElementById(listId);
+  
+  if (!suggestionList) {
+    suggestionList = document.createElement('div');
+    suggestionList.id = listId;
+    suggestionList.className = 'suggestion-list';
+    suggestionList.style.display = 'none';
+    field.parentNode.insertBefore(suggestionList, field.nextSibling);
+  }
+  
+  // Show suggestions when the field is focused or typed in
+  field.addEventListener('input', function() {
+    const searchTerm = field.value.trim();
+    if (searchTerm.length > 0) {
+      showSuggestions(searchTerm);
+    } else {
+      hideSuggestions();
+    }
+  });
+  
+  field.addEventListener('focus', function() {
+    if (field.value.trim().length > 0) {
+      showSuggestions(field.value.trim());
+    }
+  });
+  
+  // Hide suggestions when clicking outside
+  document.addEventListener('click', function(e) {
+    if (e.target !== field && !suggestionList.contains(e.target)) {
+      hideSuggestions();
+    }
+  });
+  
+  // Show suggestions based on search term
+  function ix_showSuggestions(searchTerm) {
+    if (allUsers.length === 0) {
+      console.log("No users loaded yet, attempting to load");
+      ix_loadAllUsers();
+      return;
+    }
+    
+    // Filter users based on search field and term
+    searchTerm = searchTerm.toLowerCase();
+    // Update this part in the showSuggestions function inside setupFieldAutocomplete
+  const matches = allUsers.filter(user => {
+    if (searchField === 'phone') {
+      // Ensure both are treated as strings and clean them
+      const cleanedSearch = String(searchTerm).replace(/\D/g, '');
+      const cleanedPhone = String(user[searchField] || '').replace(/\D/g, '');
+      return cleanedPhone.includes(cleanedSearch);
+    } else {
+      const fieldValue = String(user[searchField] || '');
+      return fieldValue.toLowerCase().includes(searchTerm);
+    }
+  }).slice(0, 10); // Limit to 10 results
+      
+    // If no matches, hide suggestions
+    if (matches.length === 0) {
+      hideSuggestions();
+      return;
+    }
+    
+    // Clear and populate the suggestion list
+    suggestionList.innerHTML = '';
+    
+    matches.forEach(user => {
+      const item = document.createElement('div');
+      item.className = 'suggestion-item';
+      
+      // Format display based on search field
+      let displayText = '';
+      if (searchField === 'name') {
+        displayText = `<b>${user.name || ''}</b>`;
+        if (user.phone) displayText += ` - ${user.phone}`;
+        if (user.email) displayText += ` - ${user.email}`;
+      } else if (searchField === 'email') {
+        displayText = `<b>${user.email || ''}</b>`;
+        if (user.name) displayText += ` - ${user.name}`;
+        if (user.phone) displayText += ` - ${user.phone}`;
+      } else if (searchField === 'phone') {
+        displayText = `<b>${user.phone || ''}</b>`;
+        if (user.name) displayText += ` - ${user.name}`;
+        if (user.email) displayText += ` - ${user.email}`;
+      }
+      
+      item.innerHTML = displayText;
+      
+      // Handle item selection
+      item.addEventListener('click', function() {
+        ix_fillFields(user);
+        hideSuggestions();
+      });
+      
+      suggestionList.appendChild(item);
+    });
+    
+    // Update and show suggestion list
+    suggestionList.style.width = field.offsetWidth + 'px';
+    suggestionList.style.display = 'block';
+  }
+  
+  // Hide the suggestion list
+  function hideSuggestions() {
+    suggestionList.style.display = 'none';
+  }
+  
+  // Fill in related fields when an item is selected
+  function ix_fillFields(user) {
+    relatedFields.forEach(relatedId => {
+      const relatedField = document.getElementById(relatedId);
+      if (!relatedField) return;
+      
+      // Determine which field to fill (name, email, phone)
+      const fieldType = relatedId.includes('name') ? 'name' : 
+                        relatedId.includes('email') ? 'email' : 
+                        relatedId.includes('phone') ? 'phone' : '';
+      
+      if (fieldType && user[fieldType]) {
+        relatedField.value = user[fieldType];
+      }
+    });
+  }
+}
+
+function ix_setupDurationField() {
+  const durationType = document.getElementById('duration_type');
+  const customDurationField = document.getElementById('custom-duration-field');
+  const customDurationValue = document.getElementById('custom_duration_value');
+  const durationField = document.getElementById('duration');
+
+  // When duration type changes
+  durationType.addEventListener('change', function() {
+    if (this.value === 'custom') {
+      // Show custom duration field
+      customDurationField.style.display = 'block';
+      customDurationValue.required = true;
+      // Calculate duration based on custom value
+      durationField.value = customDurationValue.value;
+    } else {
+      // Hide custom duration field
+      customDurationField.style.display = 'none';
+      customDurationValue.required = false;
+      // Set duration directly from dropdown
+      durationField.value = this.value;
+    }
+  });
+
+  // When custom duration value changes
+  customDurationValue.addEventListener('input', function() {
+    if (durationType.value === 'custom') {
+      durationField.value = this.value;
+    }
+  });
+}
+
+// Function to populate service types dropdown
+function ix_populateServiceTypes(serviceTypes) {
+    const dropdown = document.getElementById('service');
+
+    serviceTypes.forEach(type => {
+        const option = document.createElement('option');
+        option.value = type.value;
+        option.textContent = type.label;
+        dropdown.appendChild(option);
+    });
+
+    // Add "Other" option
+    // const otherOption = document.createElement('option');
+    // otherOption.value = 'Other';
+    // otherOption.textContent = 'Other';
+    // dropdown.appendChild(otherOption);
+}
+
+// Function to populate US states dropdown
+function ix_populateUsStates(states) {
+    const dropdown = document.getElementById('state');
+
+    states.forEach(state => {
+        const option = document.createElement('option');
+        option.value = state.value;
+        option.textContent = state.label;
+        dropdown.appendChild(option);
+    });
+}
+
+// Function to handle image upload
+function ix_handleImageUpload(file) {
+    if (!file || !file.type.startsWith('image/')) {
+        alert('Please select a valid image file.');
+        return;
+    }
+
+    // Display preview
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        const imagePreview = document.getElementById('image-preview');
+        const imageName = document.getElementById('image-name');
+
+        imagePreview.src = e.target.result;
+        imageName.textContent = file.name;
+
+        document.getElementById('image-upload-area').classList.add('hidden');
+        document.getElementById('image-preview-container').classList.remove('hidden');
+
+        // Upload to Drive
+        ix_uploadImageToMyDrive(file);
+    };
+    reader.readAsDataURL(file);
+}
+
+// Function to upload image to Drive
+
+// Modify your uploadImageToMyDrive function
+function ix_uploadImageToMyDrive(file) {
+    // Set the flag to indicate upload in progress
+    imageUploadInProgress = true;
+
+    // Disable the submit button during upload
+    const submitButton = document.querySelector('button[type="submit"]');
+    submitButton.disabled = true;
+    submitButton.innerHTML = '<i class="material-icons">cloud_upload</i> Uploading Image...';
+
+    // Set up a file reader to convert the file to binary
+    const reader = new FileReader();
+    reader.onload = function (e) {
+        const uploadedFile = JSON.stringify([...new Int8Array(e.target.result)]);
+        const fileName = file.name;
+        const mimeType = file.type;
+
+        // Send the file to our Apps Script function
+        google.script.run
+            .withSuccessHandler(function (result) {
+                // Clear the flag when upload is complete
+                imageUploadInProgress = false;
+
+                // Re-enable the submit button
+                submitButton.disabled = false;
+                submitButton.innerHTML = 'Schedule Appointment';
+
+                if (result.success) {
+                    document.getElementById('image_drive_id').value = result.fileId;
+                    document.getElementById('image_name').value = result.fileName;
+                    console.log('Image uploaded successfully, IDs set:', result.fileId, result.fileName);
+                } else {
+                    console.error('Failed to upload image:', result.error);
+                    alert('Failed to upload image. Please try again.');
+                }
+            })
+            .withFailureHandler(function (error) {
+                // Clear the flag when upload fails
+                imageUploadInProgress = false;
+
+                // Re-enable the submit button
+                submitButton.disabled = false;
+                submitButton.innerHTML = 'Schedule Appointment';
+
+                console.error('Error uploading image:', error);
+                alert('Error uploading image: ' + error);
+            })
+            .uploadImageToDrive(uploadedFile, fileName, mimeType);
+    };
+    reader.readAsArrayBuffer(file);
+}
+
+// Function to update full address
+function ix_updateFullAddress() {
+    const street = document.getElementById('street').value.trim();
+    const city = document.getElementById('city').value.trim();
+    const state = document.getElementById('state').value.trim();
+    const zip = document.getElementById('zip').value.trim();
+
+    if (street && city && state && zip) {
+        const fullAddress = `${street}, ${city}, ${state}, ${zip}, USA`;
+        document.getElementById('address').value = fullAddress;
+    }
+}
+
+// Function to handle form submission
+function ix_handleFormSubmit() {
+  console.log("STep1")
+    // Prevent default form submission
+    event.preventDefault();
+    // Check if image upload is in progress
+    if (imageUploadInProgress) {
+        alert('Please wait for image upload to complete before submitting the form.');
+        return false;
+    }
+    // Validate form
+    if (!ix_validateForm()) {
+        return false;
+    }
+
+    // Get form data
+    const formData = ix_getFormData();
+    // Log the image IDs to verify they're being included
+    console.log('Submitting form with image data:', {
+        image_drive_id: formData.image_drive_id,
+        image_name: formData.image_name
+    });
+    // Disable form submission button and show loading state
+    const submitButton = document.querySelector('button[type="submit"]');
+    const originalButtonText = submitButton.textContent;
+    submitButton.textContent = 'Processing...';
+    submitButton.disabled = true;
+    // console.log("formData.image_drive_id")
+    // console.log(formData.image_drive_id)
+    // console.log(formData.image_name)
+    // Submit data to Apps Script
+    console.log("STep2")
+    google.script.run
+        .withSuccessHandler(function (result) {
+            // Enable button again
+            submitButton.textContent = originalButtonText;
+            submitButton.disabled = false;
+
+            if (result.success) {
+                console.log(result)
+                // Handle successful submission
+                ix_handleSubmissionSuccess(result, formData);
+            } else {
+                // Handle error
+                alert('Error: ' + result.error);
+            }
+        })
+        .withFailureHandler(function (error) {
+            // Enable button again
+            submitButton.textContent = originalButtonText;
+            submitButton.disabled = false;
+
+            // Show error
+            alert('Failed to schedule appointment: ' + error);
+        })
+        .addAppointment(formData);
+
+    return false;
+}
+
+// Function to validate form
+function ix_validateForm() {
+    // Check required fields
+    const requiredFields = document.querySelectorAll('[required]');
+    let isValid = true;
+
+    requiredFields.forEach(field => {
+        if (!field.value.trim()) {
+            field.classList.add('input-error');
+            isValid = false;
+
+            // Create error message if doesn't exist
+            let errorMsg = field.nextElementSibling;
+            if (!errorMsg || !errorMsg.classList.contains('error-message')) {
+                errorMsg = document.createElement('div');
+                errorMsg.classList.add('error-message');
+                errorMsg.textContent = 'This field is required';
+                field.parentNode.insertBefore(errorMsg, field.nextSibling);
+            }
+        } else {
+            field.classList.remove('input-error');
+
+            // Remove error message if exists
+            const errorMsg = field.nextElementSibling;
+            if (errorMsg && errorMsg.classList.contains('error-message')) {
+                errorMsg.remove();
+            }
+        }
+    });
+    // Validate address
+    const addressSelect = document.getElementById('address-select');
+    if (!addressSelect.value) {
+        addressSelect.classList.add('input-error');
+        isValid = false;
+
+        // Create error message if doesn't exist
+        let errorMsg = addressSelect.nextElementSibling;
+        if (!errorMsg || !errorMsg.classList.contains('error-message')) {
+            errorMsg = document.createElement('div');
+            errorMsg.classList.add('error-message');
+            errorMsg.textContent = 'Please select an address';
+            addressSelect.parentNode.insertBefore(errorMsg, addressSelect.nextSibling);
+        }
+    } else if (addressSelect.value === 'custom') {
+        // Validate custom address fields
+        const requiredAddressFields = [
+            document.getElementById('street'),
+            document.getElementById('city'),
+            document.getElementById('state'),
+            document.getElementById('zip')
+        ];
+
+        requiredAddressFields.forEach(field => {
+            if (!field.value.trim()) {
+                field.classList.add('input-error');
+                isValid = false;
+
+                // Create error message if doesn't exist
+                let errorMsg = field.nextElementSibling;
+                if (!errorMsg || !errorMsg.classList.contains('error-message')) {
+                    errorMsg = document.createElement('div');
+                    errorMsg.classList.add('error-message');
+                    errorMsg.textContent = 'This field is required';
+                    field.parentNode.insertBefore(errorMsg, field.nextSibling);
+                }
+            } else {
+                field.classList.remove('input-error');
+
+                // Remove error message if exists
+                const errorMsg = field.nextElementSibling;
+                if (errorMsg && errorMsg.classList.contains('error-message')) {
+                    errorMsg.remove();
+                }
+            }
+        });
+    }
+    // Validate phone number format if provided
+    const phoneFields = [
+        { field: document.getElementById('host_phone'), label: 'Host' },
+        { field: document.getElementById('client_phone'), label: 'Client' }
+    ];
+
+    phoneFields.forEach(item => {
+        const field = item.field;
+        if (field.value.trim()) {
+            const validation = ix_validateAndFormatPhoneNumber(field.value);
+            if (!validation.valid) {
+                field.classList.add('input-error');
+                isValid = false;
+
+                // Create error message if doesn't exist
+                let errorMsg = field.nextElementSibling;
+                if (!errorMsg || !errorMsg.classList.contains('error-message')) {
+                    errorMsg = document.createElement('div');
+                    errorMsg.classList.add('error-message');
+                    errorMsg.textContent = validation.error;
+                    field.parentNode.insertBefore(errorMsg, field.nextSibling);
+                }
+            } else {
+                // Format the phone number in the input field
+                field.value = validation.cleanedPhone;
+                field.classList.remove('input-error');
+
+                // Remove error message if exists
+                const errorMsg = field.nextElementSibling;
+                if (errorMsg && errorMsg.classList.contains('error-message')) {
+                    errorMsg.remove();
+                }
+            }
+        }
+    });
+
+    // Check if service type is "Other" but "Other service" is empty
+    const serviceType = document.getElementById('service');
+    const otherService = document.getElementById('other-service');
+
+    if (serviceType.value === 'Other' && !otherService.value.trim()) {
+        otherService.classList.add('input-error');
+        isValid = false;
+
+        // Create error message if doesn't exist
+        let errorMsg = otherService.nextElementSibling;
+        if (!errorMsg || !errorMsg.classList.contains('error-message')) {
+            errorMsg = document.createElement('div');
+            errorMsg.classList.add('error-message');
+            errorMsg.textContent = 'Please specify the service type';
+            otherService.parentNode.insertBefore(errorMsg, otherService.nextSibling);
+        }
+    }
+
+    return isValid;
+}
+
+// Improved phone number validation and formatting
+function ix_validateAndFormatPhoneNumber(phone) {
+    // Remove all non-digit characters
+    const cleanedPhone = phone.replace(/\D/g, '');
+
+    // Check if it's a valid 10-digit US phone number
+    if (cleanedPhone.length !== 10) {
+        return { valid: false, error: 'Please enter a valid 10-digit phone number' };
+    }
+
+    // Format for display: (XXX) XXX-XXXX
+    const formattedPhone = `(${cleanedPhone.substring(0, 3)}) ${cleanedPhone.substring(3, 6)}-${cleanedPhone.substring(6)}`;
+
+    return {
+        valid: true,
+        cleanedPhone: cleanedPhone,
+        formattedPhone: formattedPhone
+    };
+}
+// Function to get form data
+// Function to get form data
+function ix_getFormData() {
+    const formData = {
+        // Add the duration field
+        duration: document.getElementById('duration').value,
+
+        // Service details
+        service: document.getElementById('service').value === 'Other' ?
+            document.getElementById('other-service').value :
+            document.getElementById('service').value,
+        date: document.getElementById('date').value,
+        time: document.getElementById('time').value,
+
+        // Address
+        address: document.getElementById('address').value,
+
+        // Provider details
+        provider_email: document.getElementById('current-email').textContent !== 'Not logged in' &&
+            document.getElementById('current-email').textContent !== 'Loading...' ?
+            document.getElementById('current-email').textContent : '',
+
+        // Host details
+        host_name: document.getElementById('host_name').value,
+        host_email: document.getElementById('host_email').value,
+        host_phone: document.getElementById('host_phone').value,
+        send_email_host: document.getElementById('send_email_host').checked,
+        send_sms_host: document.getElementById('send_sms_host').checked,
+
+        // Client details
+        client_name: document.getElementById('client_name').value,
+        client_email: document.getElementById('client_email').value,
+        client_phone: document.getElementById('client_phone').value,
+        send_email_client: document.getElementById('send_email_client').checked,
+        send_sms_client: document.getElementById('send_sms_client').checked,
+
+        // Additional details
+        background_color: document.getElementById('rgb_color').value,
+        notes: document.getElementById('notes').value,
+        notification_time: document.getElementById('notification_time').value, // Add this line
+
+
+        // Image details
+        image_drive_id: document.getElementById('image_drive_id').value,
+        image_name: document.getElementById('image_name').value
+    };
+
+    return formData;
+}
+
+// Function to handle successful submission
+function ix_handleSubmissionSuccess(result, formData) {
+    // Hide form section and show success section
+    document.getElementById('form-section').classList.add('hidden');
+    document.getElementById('success-section').classList.remove('hidden');
+
+    // Get the calendar links from the result
+    const googleCalendarLink = result.googleCalendarLink || '';
+    const icsLink = result.icsLink || '';
+
+    // Display appointment summary with calendar links
+    const appointmentSummary = document.getElementById('appointment-summary');
+    appointmentSummary.innerHTML = `
+    <div class="details-row">
+      <div class="details-label">Service:</div>
+      <div class="details-value">${formData.service}</div>
+    </div>
+    <div class="details-row">
+      <div class="details-label">Date:</div>
+      <div class="details-value">${formData.date}</div>
+    </div>
+    <div class="details-row">
+      <div class="details-label">Time:</div>
+      <div class="details-value">${formData.time}</div>
+    </div>
+    <div class="details-row">
+      <div class="details-label">Duration:</div>
+      <div class="details-value">${formData.duration} minutes</div>
+    </div>
+    <div class="details-row">
+      <div class="details-label">Location:</div>
+      <div class="details-value">${formData.address}</div>
+    </div>
+    <div class="details-row">
+      <div class="details-label">Host:</div>
+      <div class="details-value">${formData.host_name}</div>
+    </div>
+    <div class="details-row">
+      <div class="details-label">Client:</div>
+      <div class="details-value">${formData.client_name}</div>
+    </div>
+  `;
+
+    // Add calendar links section if available
+    if (googleCalendarLink || icsLink) {
+        const calendarLinksSection = document.createElement('div');
+        calendarLinksSection.className = 'calendar-links';
+        calendarLinksSection.style.marginTop = '20px';
+        calendarLinksSection.style.padding = '15px';
+        calendarLinksSection.style.backgroundColor = '#f0f2f9';
+        calendarLinksSection.style.borderRadius = '12px';
+
+        let calendarLinksHTML = '<h3 style="margin-top: 0; color: #4366ed;">Add to Calendar:</h3>';
+
+        if (googleCalendarLink) {
+            calendarLinksHTML += `
+        <div style="margin-bottom: 10px;">
+          <a href="${googleCalendarLink}" target="_blank" class="btn-theme-outline" style="display: inline-flex; align-items: center; text-decoration: none;">
+            <i class="material-icons" style="margin-right: 5px;">event</i>
+            Google Calendar
+          </a>
+        </div>
+      `;
+        }
+
+        if (icsLink) {
+            calendarLinksHTML += `
+        <div>
+          <a href="${icsLink}" target="_blank" class="btn-theme-outline" style="display: inline-flex; align-items: center; text-decoration: none;">
+            <i class="material-icons" style="margin-right: 5px;">calendar_today</i>
+            iCalendar (Outlook, Apple Calendar)
+          </a>
+        </div>
+      `;
+        }
+
+        calendarLinksSection.innerHTML = calendarLinksHTML;
+        appointmentSummary.appendChild(calendarLinksSection);
+    }
+
+    // Get the passUrl from the API response
+    const qrCodeUrl = result.apiResponse.passUrl;
+
+    // Store the URLs in hidden fields for later use
+    const qrCodeUrlInput = document.createElement('input');
+    qrCodeUrlInput.type = 'hidden';
+    qrCodeUrlInput.id = 'qr-code-url';
+    qrCodeUrlInput.value = qrCodeUrl;
+    document.getElementById('success-section').appendChild(qrCodeUrlInput);
+
+    const googleCalendarLinkInput = document.createElement('input');
+    googleCalendarLinkInput.type = 'hidden';
+    googleCalendarLinkInput.id = 'google-calendar-link';
+    googleCalendarLinkInput.value = googleCalendarLink;
+    document.getElementById('success-section').appendChild(googleCalendarLinkInput);
+
+    const icsLinkInput = document.createElement('input');
+    icsLinkInput.type = 'hidden';
+    icsLinkInput.id = 'ics-link';
+    icsLinkInput.value = icsLink;
+    document.getElementById('success-section').appendChild(icsLinkInput);
+
+    // Generate and display QR code
+    google.script.run
+        .withSuccessHandler(function (base64QrCode) {
+            document.getElementById('qr-code-image').src = 'data:image/png;base64,' + base64QrCode;
+            // Add data attribute to image for easy retrieval
+            document.getElementById('qr-code-image').setAttribute('data-url', qrCodeUrl);
+        })
+        .withFailureHandler(function (error) {
+            // Fallback to client-side QR code generation
+            const qrCodeDiv = document.getElementById('qr-code-container');
+            qrCodeDiv.innerHTML = '';
+
+            try {
+                // Create a new container for QR code
+                const qrCodeElement = document.createElement('div');
+                qrCodeElement.id = 'qr-code';
+                qrCodeDiv.appendChild(qrCodeElement);
+
+                // Add a paragraph for instructions
+                const instructionsElement = document.createElement('p');
+                instructionsElement.textContent = 'Scan this QR code for appointment details';
+                qrCodeDiv.appendChild(instructionsElement);
+
+                // Generate QR code
+                new QRCode(qrCodeElement, {
+                    text: qrCodeUrl,
+                    width: 250,
+                    height: 250,
+                    colorDark: "#4366ed",
+                    colorLight: "#ffffff",
+                    correctLevel: QRCode.CorrectLevel.H
+                });
+
+                // Store the URL as a data attribute on the canvas
+                const canvas = qrCodeElement.querySelector('canvas');
+                if (canvas) {
+                    canvas.setAttribute('data-url', qrCodeUrl);
+                }
+            } catch (error) {
+                console.error('QR Code generation error:', error);
+                qrCodeDiv.innerHTML = '<div class="alert alert-danger">Error generating QR code</div>';
+            }
+        })
+        .generateQrCode(qrCodeUrl);
+
+    // Automatically send notifications based on checkboxes
+    ix_sendAutomaticNotifications(formData, qrCodeUrl, googleCalendarLink, icsLink);
+}
+
+
+function ix_getQrCodeUrl() {
+    // Try multiple methods to get the URL
+    return document.getElementById('qr-code-url')?.value ||
+        document.getElementById('qr-code-image')?.getAttribute('data-url') ||
+        document.querySelector('#qr-code canvas')?.getAttribute('data-url');
+}
+
+// Updated notification sending function
+function ix_sendNotification(type) {
+    const qrCodeUrl = ix_getQrCodeUrl();
+    const googleCalendarLink = document.getElementById('google-calendar-link')?.value || '';
+    const icsLink = document.getElementById('ics-link')?.value || '';
+
+    const appointmentDetails = {
+        service: document.getElementById('service').value === 'Other' ?
+            document.getElementById('other-service').value :
+            document.getElementById('service').value,
+        date: document.getElementById('date').value,
+        time: document.getElementById('time').value,
+        address: document.getElementById('address').value,
+        host: document.getElementById('host_name').value,
+        client: document.getElementById('client_name').value,
+        qrCodeUrl: qrCodeUrl,
+        googleCalendarLink: googleCalendarLink,
+        icsLink: icsLink
+    };
+    console.log("qrCodeUr", qrCodeUr)
+    if (type === 'email') {
+        const email = prompt("Enter email address to send the appointment details:");
+        if (!email) return;
+
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            alert('Please enter a valid email address');
+            return;
+        }
+
+        google.script.run
+            .withSuccessHandler(function (response) {
+                if (response.success) {
+                    alert('Email sent successfully!');
+                } else {
+                    alert('Failed to send email: ' + response.error);
+                }
+            })
+            .withFailureHandler(function (error) {
+                alert('Error sending email: ' + error);
+            })
+            .sendEmailShare(email, appointmentDetails);
+    } else if (type === 'sms') {
+        const phone = prompt("Enter phone number (10 digits):");
+        if (!phone) return;
+
+        // Allow for different formats but validate
+        const cleanedPhone = phone.replace(/\D/g, '');
+        if (cleanedPhone.length !== 10) {
+            alert('Please enter a valid 10-digit phone number');
+            return;
+        }
+
+        google.script.run
+            .withSuccessHandler(function (response) {
+                if (response.success) {
+                    alert('SMS sent successfully!');
+                } else {
+                    alert('Failed to send SMS: ' + response.error);
+                }
+            })
+            .withFailureHandler(function (error) {
+                alert('Error sending SMS: ' + error);
+            })
+            .sendSMSShare(cleanedPhone, appointmentDetails);
+    }
+}
+
+
+function ix_sendAutomaticNotifications(formData, qrCodeUrl, googleCalendarLink, icsLink) {
+    // Create a unified appointment details object
+    const appointmentDetails = {
+        service: formData.service,
+        date: formData.date,
+        time: formData.time,
+        address: formData.address,
+        host: formData.host_name,
+        client: formData.client_name,
+        qrCodeUrl: qrCodeUrl,
+        googleCalendarLink: googleCalendarLink,
+        icsLink: icsLink
+    };
+    console.log("qrCodeUr", qrCodeUr)
+    // Add a notification status section to show what was sent
+    const statusDiv = document.createElement('div');
+    statusDiv.className = 'notification-status';
+    statusDiv.style.margin = '20px 0';
+    statusDiv.style.padding = '15px';
+    statusDiv.style.backgroundColor = '#f8f9ff';
+    statusDiv.style.borderRadius = '12px';
+    statusDiv.style.border = '1px solid #e1e4f5';
+
+    let notificationsSent = false;
+    let statusHTML = '<h3 style="margin-top: 0; color: #4366ed;">Notification Status:</h3>';
+
+    // Function to handle notification sending for each type
+    const sendNotificationIfRequested = (recipientType, isEmail, contact, shouldSend) => {
+        if (!shouldSend || !contact) return false;
+
+        const method = isEmail ? 'sendEmailShare' : 'sendSMSShare';
+        const methodName = isEmail ? 'email' : 'SMS';
+
+        google.script.run
+            .withSuccessHandler(function (response) {
+                const statusElement = document.getElementById(`${recipientType}-${methodName}-status`);
+                if (statusElement) {
+                    if (response.success) {
+                        statusElement.innerHTML = `✅ ${methodName.toUpperCase()} sent to ${recipientType}`;
+                        statusElement.style.color = 'var(--success-color)';
+                    } else {
+                        statusElement.innerHTML = `❌ Failed to send ${methodName} to ${recipientType}: ${response.error}`;
+                        statusElement.style.color = 'var(--error-color)';
+                    }
+                }
+            })
+            .withFailureHandler(function (error) {
+                const statusElement = document.getElementById(`${recipientType}-${methodName}-status`);
+                if (statusElement) {
+                    statusElement.innerHTML = `❌ Error sending ${methodName} to ${recipientType}: ${error}`;
+                    statusElement.style.color = 'var(--error-color)';
+                }
+            })[method](contact, appointmentDetails);
+
+        return true;
+    };
+
+    // Host notifications
+    if (formData.send_email_host && formData.host_email) {
+        statusHTML += `<div id="host-email-status">⏳ Sending email to host...</div>`;
+        notificationsSent = true;
+    }
+
+    if (formData.send_sms_host && formData.host_phone) {
+        statusHTML += `<div id="host-SMS-status">⏳ Sending SMS to host...</div>`;
+        notificationsSent = true;
+    }
+
+    // Client notifications
+    if (formData.send_email_client && formData.client_email) {
+        statusHTML += `<div id="client-email-status">⏳ Sending email to client...</div>`;
+        notificationsSent = true;
+    }
+
+    if (formData.send_sms_client && formData.client_phone) {
+        statusHTML += `<div id="client-SMS-status">⏳ Sending SMS to client...</div>`;
+        notificationsSent = true;
+    }
+
+    if (!notificationsSent) {
+        statusHTML += '<div>No automatic notifications selected.</div>';
+    }
+
+    // Add the status div to the page
+    statusDiv.innerHTML = statusHTML;
+    document.getElementById('appointment-summary').after(statusDiv);
+
+    // Send the notifications
+    sendNotificationIfRequested('host', true, formData.host_email, formData.send_email_host);
+    sendNotificationIfRequested('host', false, formData.host_phone, formData.send_sms_host);
+
+    sendNotificationIfRequested('client', true, formData.client_email, formData.send_email_client);
+    sendNotificationIfRequested('client', false, formData.client_phone, formData.send_sms_client);
+}
+
+// Function to send email notification
+function ix_sendEmailNotification() {
+    const email = prompt("Enter email address to send the appointment details:");
+    if (!email) return;
+
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+        alert('Please enter a valid email address');
+        return;
+    }
+
+    const appointmentDetails = {
+        service: document.getElementById('service').value,
+        date: document.getElementById('date').value,
+        time: document.getElementById('time').value,
+        address: document.getElementById('address').value,
+        host: document.getElementById('host_name').value,
+        client: document.getElementById('client_name').value
+    };
+
+    google.script.run
+        .withSuccessHandler(function (response) {
+            if (response.success) {
+                alert('Email sent successfully!');
+            } else {
+                alert('Failed to send email: ' + response.error);
+            }
+        })
+        .withFailureHandler(function (error) {
+            alert('Error sending email: ' + error);
+        })
+        .sendEmailShare(email, appointmentDetails);
+}
+
+// Function to send SMS notification
+function ix_sendSMSNotification() {
+    const phone = prompt("Enter phone number (format: 123-456-7890):");
+    if (!phone) return;
+
+    if (!/^\d{3}-\d{3}-\d{4}$/.test(phone)) {
+        alert('Please enter a valid phone number in format: 123-456-7890');
+        return;
+    }
+
+    const appointmentDetails = {
+        service: document.getElementById('service').value,
+        date: document.getElementById('date').value,
+        time: document.getElementById('time').value,
+        address: document.getElementById('address').value,
+        host: document.getElementById('host_name').value,
+        client: document.getElementById('client_name').value
+    };
+
+    google.script.run
+        .withSuccessHandler(function (response) {
+            if (response.success) {
+                alert('SMS sent successfully!');
+            } else {
+                alert('Failed to send SMS: ' + response.error);
+            }
+        })
+        .withFailureHandler(function (error) {
+            alert('Error sending SMS: ' + error);
+        })
+        .sendSMSShare(phone, appointmentDetails);
+}
+
+// Function to send notification
+function ix_sendNotification(type) {
+    const appointmentDetails = {
+        service: document.getElementById('service').value === 'Other' ?
+            document.getElementById('other-service').value :
+            document.getElementById('service').value,
+        date: document.getElementById('date').value,
+        time: document.getElementById('time').value,
+        address: document.getElementById('address').value,
+        host: document.getElementById('host_name').value,
+        client: document.getElementById('client_name').value,
+        // Get the QR code URL from the image's source (if using the HTML5 canvas, we need a different approach)
+        qrCodeUrl: document.getElementById('qr-code-image').src || document.querySelector('#qr-code-container canvas')?.dataset?.qrCodeUrl
+    };
+
+    if (type === 'email') {
+        const email = prompt("Enter email address to send the appointment details:");
+        if (!email) return;
+
+        if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+            alert('Please enter a valid email address');
+            return;
+        }
+
+        google.script.run
+            .withSuccessHandler(function (response) {
+                if (response.success) {
+                    alert('Email sent successfully!');
+                } else {
+                    alert('Failed to send email: ' + response.error);
+                }
+            })
+            .withFailureHandler(function (error) {
+                alert('Error sending email: ' + error);
+            })
+            .sendEmailShare(email, appointmentDetails);
+    } else if (type === 'sms') {
+        const phone = prompt("Enter phone number (10 digits):");
+        if (!phone) return;
+
+        if (!/^\d{10}$/.test(phone)) {
+            alert('Please enter a valid 10-digit phone number');
+            return;
+        }
+
+        google.script.run
+            .withSuccessHandler(function (response) {
+                if (response.success) {
+                    alert('SMS sent successfully!');
+                } else {
+                    alert('Failed to send SMS: ' + response.error);
+                }
+            })
+            .withFailureHandler(function (error) {
+                alert('Error sending SMS: ' + error);
+            })
+            .sendSMSShare(phone, appointmentDetails);
+    }
+}
+
+// Function to reset form
+function ix_resetForm() {
+    imageUploadInProgress = false
+    document.getElementById('appointment-form').reset();
+
+    //Reset the Appointment duration
+    document.getElementById('custom-duration-field').style.display = 'none';
+    document.getElementById('duration').value = '60';
+    document.getElementById('custom_duration_value').required = false;
+
+    // Reset image upload
+    document.getElementById('image-preview-container').classList.add('hidden');
+    document.getElementById('image-upload-area').classList.remove('hidden');
+    document.getElementById('image_drive_id').value = '';
+    document.getElementById('image_name').value = '';
+
+    // Reset color preview
+    const defaultColor = document.getElementById('background_color').value;
+    const defaultRgb = ix_hexToRgb(defaultColor);
+    document.getElementById('color-preview').style.backgroundColor = `rgb(${defaultRgb.r}, ${defaultRgb.g}, ${defaultRgb.b})`;
+    document.getElementById('rgb_color').value = `rgb(${defaultRgb.r}, ${defaultRgb.g}, ${defaultRgb.b})`;
+
+    // Hide success section and show form section
+    document.getElementById('success-section').classList.add('hidden');
+    document.getElementById('form-section').classList.remove('hidden');
+}
+
+// Helper function to convert hex color to RGB
+function ix_hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+    } : null;
+}
+
+// Function to display the current user's email
+function ix_displayCurrentUserEmail() {
+    google.script.run
+        .withSuccessHandler(function (email) {
+            document.getElementById('current-email').textContent = email || 'Not logged in';
+            console.log("Current user email:", email);
+        })
+        .withFailureHandler(function (error) {
+            console.error('Error getting email:', error);
+            document.getElementById('current-email').textContent = 'Error: ' + error;
+        })
+        .getCurrentUserEmail();
+}
+
+// Function to load appointments
+// Function to load appointments
+function ix_loadAppointments() {
+    const loadButton = document.getElementById('load-appointments');
+    const originalButtonText = loadButton.innerHTML;
+
+    loadButton.innerHTML = '<i class="material-icons" style="margin-right: 5px;">hourglass_full</i> Loading...';
+    loadButton.disabled = true;
+
+    // Add a timeout to avoid UI freezing
+    setTimeout(function () {
+        google.script.run
+            .withSuccessHandler(function (result) {
+                // Enable button again
+                loadButton.innerHTML = originalButtonText;
+                loadButton.disabled = false;
+
+                // Debug what we got back
+                console.log('Raw result received:', result);
+
+                try {
+                    // If result is a string (sometimes happens with Apps Script), parse it
+                    if (typeof result === 'string') {
+                        try {
+                            result = JSON.parse(result);
+                            console.log('Parsed result:', result);
+                        } catch (parseError) {
+                            console.error('Failed to parse result string:', parseError);
+                        }
+                    }
+
+                    // Check if result is null or undefined
+                    if (result === null || result === undefined) {
+                        alert('Error: No response received from server');
+                        return;
+                    }
+
+                    // Check if we have a success property
+                    if (result.success === undefined) {
+                        console.error('Invalid result format (missing success property):', result);
+                        alert('Error: Invalid response format from server');
+                        return;
+                    }
+
+                    if (!result.success) {
+                        alert('Error: ' + (result.error || 'Unknown error'));
+                        return;
+                    }
+
+                    // Update email display
+                    document.getElementById('current-email').textContent = result.email || 'Not logged in';
+
+                    if (!result.matches || result.matches.length === 0) {
+                        alert('No appointments found for this provider email.');
+                        return;
+                    }
+
+                    console.log('Found ' + result.matches.length + ' appointments');
+                    console.log('First match:', result.matches[0]);
+
+                    // If multiple appointments found, show selector
+                    if (result.matches.length > 1) {
+                        ix_populateAppointmentSelector(result.matches);
+                        document.getElementById('appointment-selector-container').style.display = 'block';
+                    } else {
+                        // If only one appointment, populate form directly
+                        ix_populateFormWithAppointment(result.matches[0]);
+                        document.getElementById('appointment-selector-container').style.display = 'none';
+                    }
+                } catch (error) {
+                    console.error('Error processing result:', error);
+                    console.error('Result that caused error:', result);
+                    alert('Error processing data: ' + error.message);
+                }
+            })
+            .withFailureHandler(function (error) {
+                // Enable button again
+                loadButton.innerHTML = originalButtonText;
+                loadButton.disabled = false;
+
+                console.error('Server error loading appointments:', error);
+                alert('Failed to load appointments: ' + error);
+            })
+            .getAppointmentsForProvider();
+    }, 100); // Small delay to let the UI update before calling the server
+}
+
+// Function to populate appointment selector dropdown
+function ix_populateAppointmentSelector(appointments) {
+    const selector = document.getElementById('appointment-selector');
+
+    // Clear existing options
+    selector.innerHTML = '';
+
+    // Add default option
+    const defaultOption = document.createElement('option');
+    defaultOption.value = '';
+    defaultOption.textContent = 'Select an appointment';
+    selector.appendChild(defaultOption);
+
+    // Add appointments to dropdown
+    appointments.forEach(function (appointment, index) {
+        const option = document.createElement('option');
+        option.value = index;
+
+        // Create a descriptive label for each appointment
+        const clientName = appointment.client_name || 'Unknown client';
+        const hostName = appointment.host_name || 'Unknown host';
+        const service = appointment.service || 'Unknown service';
+        const date = appointment.date || 'Unknown date';
+
+        option.textContent = hostName + " - " + clientName;
+        selector.appendChild(option);
+    });
+
+    // Store appointments in a data attribute for easy access
+    selector.dataset.appointments = JSON.stringify(appointments);
+
+    // Setup change event handler
+    selector.addEventListener('change', function () {
+        if (this.value === '') return;
+
+        const selectedIndex = parseInt(this.value);
+        const appointments = JSON.parse(this.dataset.appointments);
+
+        ix_populateFormWithAppointment(appointments[selectedIndex]);
+    });
+}
+
+// Function to populate form with appointment data
+function ix_populateFormWithAppointment(appointment) {
+    if (appointment.duration) {
+        const durationType = document.getElementById('duration_type');
+        const customDurationField = document.getElementById('custom-duration-field');
+        const customDurationValue = document.getElementById('custom_duration_value');
+        const durationValue = appointment.duration;
+
+        // Check if duration matches any predefined values
+        let durationFound = false;
+        for (let i = 0; i < durationType.options.length; i++) {
+            const option = durationType.options[i];
+            if (option.value !== 'custom' && option.value === durationValue) {
+                durationType.selectedIndex = i;
+                durationFound = true;
+                customDurationField.style.display = 'none';
+                customDurationValue.required = false;
+                break;
+            }
+        }
+
+        // If no match found, set to custom
+        if (!durationFound) {
+            // Find the custom option
+            for (let i = 0; i < durationType.options.length; i++) {
+                if (durationType.options[i].value === 'custom') {
+                    durationType.selectedIndex = i;
+                    break;
+                }
+            }
+
+            // Show custom fields
+            customDurationField.style.display = 'block';
+            customDurationValue.required = true;
+            customDurationValue.value = durationValue;
+        }
+
+        // Set the hidden field value
+        document.getElementById('duration').value = durationValue;
+    } else {
+        // Default to 60 minutes if no duration is set
+        document.getElementById('duration_type').value = "60";
+        document.getElementById('duration').value = "60";
+        document.getElementById('custom-duration-field').style.display = 'none';
+    }
+    // Add this to the populateFormWithAppointment function where it handles additional details
+    // Add this to the populateFormWithAppointment function where it handles additional details
+    // Add this to the populateFormWithAppointment function where it handles additional details
+
+    // Notification time handling
+    if (appointment.notification) {
+        const notificationTime = parseInt(appointment.notification);
+        const notificationTimeType = document.getElementById('notification_time_type');
+        const customNotificationTime = document.getElementById('custom-notification-time');
+        const customNotificationValue = document.getElementById('custom_notification_value');
+        const customNotificationUnit = document.getElementById('custom_notification_unit');
+
+        // Check if notification time matches any predefined values
+        let foundMatch = false;
+        for (let i = 0; i < notificationTimeType.options.length; i++) {
+            const option = notificationTimeType.options[i];
+            if (option.value !== 'custom' && parseInt(option.value) === notificationTime) {
+                notificationTimeType.selectedIndex = i;
+                foundMatch = true;
+                customNotificationTime.style.display = 'none';
+                break;
+            }
+        }
+
+        // If no match found, set to custom
+        if (!foundMatch) {
+            // Find the custom option
+            for (let i = 0; i < notificationTimeType.options.length; i++) {
+                if (notificationTimeType.options[i].value === 'custom') {
+                    notificationTimeType.selectedIndex = i;
+                    break;
+                }
+            }
+
+            // Show custom fields
+            customNotificationTime.style.display = 'block';
+
+            // Try to determine the best unit (weeks, days, hours, or minutes)
+            if (notificationTime % 10080 === 0 && notificationTime > 0) {
+                // Weeks
+                customNotificationValue.value = notificationTime / 10080;
+                customNotificationUnit.value = '10080';
+            } else if (notificationTime % 1440 === 0 && notificationTime > 0) {
+                // Days
+                customNotificationValue.value = notificationTime / 1440;
+                customNotificationUnit.value = '1440';
+            } else if (notificationTime % 60 === 0 && notificationTime > 0) {
+                // Hours
+                customNotificationValue.value = notificationTime / 60;
+                customNotificationUnit.value = '60';
+            } else {
+                // Minutes
+                customNotificationValue.value = notificationTime;
+                customNotificationUnit.value = '1';
+            }
+        }
+
+        // Set the hidden field value
+        document.getElementById('notification_time').value = notificationTime;
+    } else {
+        // Default to 10 minutes if no notification time is set
+        document.getElementById('notification_time_type').value = "10";
+        document.getElementById('notification_time').value = "10";
+        document.getElementById('custom-notification-time').style.display = 'none';
+    }
+    // Add this near the beginning 
+    console.log('Appointment data for checkboxes:', {
+        send_email_host: appointment.send_email_host,
+        send_sms_host: appointment.send_sms_host,
+        send_email_client: appointment.send_email_client,
+        send_sms_client: appointment.send_sms_client,
+        typeOf_send_email_host: typeof appointment.send_email_host
+    });
+    console.log('Populating form with appointment:', appointment);
+
+    // Service
+    const serviceDropdown = document.getElementById('service');
+    let serviceFound = false;
+
+    for (let i = 0; i < serviceDropdown.options.length; i++) {
+        if (serviceDropdown.options[i].value === appointment.service) {
+            serviceDropdown.selectedIndex = i;
+            serviceFound = true;
+            break;
+        }
+    }
+
+    if (!serviceFound && appointment.service) {
+        // If service not in dropdown, select "Other" and set custom value
+        for (let i = 0; i < serviceDropdown.options.length; i++) {
+            if (serviceDropdown.options[i].value === 'Other') {
+                serviceDropdown.selectedIndex = i;
+                document.getElementById('other-service').value = appointment.service;
+                document.getElementById('other-service').disabled = false;
+                break;
+            }
+        }
+    }
+
+    // Date and time
+    if (appointment.date) document.getElementById('date').value = appointment.date;
+    if (appointment.time) document.getElementById('time').value = appointment.time;
+
+
+    // Modify the address handling in populateFormWithAppointment
+    // Check if the address matches any predefined options
+    const addressSelect = document.getElementById('address-select');
+    const customAddressFields = document.getElementById('custom-address-fields');
+    let addressFound = false;
+
+    // Loop through the dropdown options to find a match
+    for (let i = 0; i < addressSelect.options.length; i++) {
+        const option = addressSelect.options[i];
+        if (option.value && option.value !== 'custom' && appointment.address === option.value) {
+            addressSelect.selectedIndex = i;
+            addressFound = true;
+            customAddressFields.style.display = 'none';
+
+            // Make custom fields not required
+            document.getElementById('street').required = false;
+            document.getElementById('city').required = false;
+            document.getElementById('state').required = false;
+            document.getElementById('zip').required = false;
+
+            break;
+        }
+    }
+
+    // If address not found in predefined list, select "Custom" and show fields
+    if (!addressFound && appointment.address) {
+        // Find the "Custom" option
+        for (let i = 0; i < addressSelect.options.length; i++) {
+            if (addressSelect.options[i].value === 'custom') {
+                addressSelect.selectedIndex = i;
+                break;
+            }
+        }
+
+        // Show custom address fields
+        customAddressFields.style.display = 'block';
+
+        // Make custom fields required
+        document.getElementById('street').required = true;
+        document.getElementById('city').required = true;
+        document.getElementById('state').required = true;
+        document.getElementById('zip').required = true;
+
+        // Parse address components
+        let street = '', city = '', state = '', zip = '';
+        if (appointment.address) {
+            // Assuming format like "4182 Isola Drive, Fremont, CA, 94555, USA"
+            const addressParts = appointment.address.split(',').map(function (part) { return part.trim(); });
+            if (addressParts.length >= 4) {
+                street = addressParts[0];
+                city = addressParts[1];
+                state = addressParts[2];
+                zip = addressParts[3];
+            }
+        }
+
+        // Fill custom address fields
+        document.getElementById('street').value = street;
+        document.getElementById('city').value = city;
+
+        // State dropdown
+        const stateDropdown = document.getElementById('state');
+        for (let i = 0; i < stateDropdown.options.length; i++) {
+            if (stateDropdown.options[i].value === state) {
+                stateDropdown.selectedIndex = i;
+                break;
+            }
+        }
+
+        document.getElementById('zip').value = zip;
+    }
+
+    // Set the address hidden field
+    document.getElementById('address').value = appointment.address || '';
+
+
+    // Update the checkbox handling part in populateFormWithAppointment
+
+    // // Host details
+    document.getElementById('host_name').value = appointment.host_name || '';
+    document.getElementById('host_email').value = appointment.host_email || '';
+    document.getElementById('host_phone').value = appointment.host_phone || '';
+    document.getElementById('send_email_host').checked = appointment.send_email_host === 'true';
+    document.getElementById('send_sms_host').checked = appointment.send_sms_host === 'true';
+
+    // Client details
+    document.getElementById('client_name').value = appointment.client_name || '';
+    document.getElementById('client_email').value = appointment.client_email || '';
+    document.getElementById('client_phone').value = appointment.client_phone || '';
+    document.getElementById('send_email_client').checked = appointment.send_email_client === 'true';
+    document.getElementById('send_sms_client').checked = appointment.send_sms_client === 'true';
+
+    // Additional details
+    // Modify the populateFormWithAppointment function
+    // In the section where it handles additional details, make these changes:
+
+    // Additional details - populate fields but keep card collapsed
+    if (appointment.background_color) {
+        // Parse RGB value to hex
+        let hexColor = '#2908b9'; // Default
+        const rgbMatch = appointment.background_color.match(/rgb\((\d+),\s*(\d+),\s*(\d+)\)/);
+        if (rgbMatch) {
+            const r = parseInt(rgbMatch[1]);
+            const g = parseInt(rgbMatch[2]);
+            const b = parseInt(rgbMatch[3]);
+            hexColor = ix_rgbToHex(r, g, b);
+        }
+
+        document.getElementById('background_color').value = hexColor;
+        document.getElementById('color-preview').style.backgroundColor = appointment.background_color;
+        document.getElementById('rgb_color').value = appointment.background_color;
+    }
+
+    document.getElementById('notes').value = appointment.notes || '';
+
+    // Image details
+    document.getElementById('image_drive_id').value = appointment.image_drive_id || '';
+    document.getElementById('image_name').value = appointment.image_name || '';
+
+    // Show image preview if available but keep card collapsed
+    if (appointment.image_drive_id && appointment.image_name) {
+        // Update image preview text
+        document.getElementById('image-name').textContent = appointment.image_name;
+
+        // Show preview container, hide upload area
+        document.getElementById('image-upload-area').classList.add('hidden');
+        document.getElementById('image-preview-container').classList.remove('hidden');
+
+        // Get the image from server
+        google.script.run
+            .withSuccessHandler(function (base64Image) {
+                if (base64Image) {
+                    // Set the image preview
+                    document.getElementById('image-preview').src = 'data:image/jpeg;base64,' + base64Image;
+                } else {
+                    // Handle missing image
+                    console.error('Failed to load image from Drive');
+                    document.getElementById('image-name').textContent = appointment.image_name + ' (Preview unavailable)';
+                }
+            })
+            .withFailureHandler(function (error) {
+                console.error('Error loading image:', error);
+                document.getElementById('image-name').textContent = appointment.image_name + ' (Preview unavailable)';
+            })
+            .getImageFromDrive(appointment.image_drive_id);
+    }
+
+
+    // Show image preview if available
+    if (appointment.image_drive_id && appointment.image_name) {
+        // Update image preview text
+        document.getElementById('image-name').textContent = appointment.image_name;
+
+        // Show preview container, hide upload area
+        document.getElementById('image-upload-area').classList.add('hidden');
+        document.getElementById('image-preview-container').classList.remove('hidden');
+
+        // Get the image from server
+        google.script.run
+            .withSuccessHandler(function (base64Image) {
+                if (base64Image) {
+                    // Set the image preview
+                    document.getElementById('image-preview').src = 'data:image/jpeg;base64,' + base64Image;
+                } else {
+                    // Handle missing image
+                    console.error('Failed to load image from Drive');
+                    document.getElementById('image-name').textContent = appointment.image_name + ' (Preview unavailable)';
+                }
+            })
+            .withFailureHandler(function (error) {
+                console.error('Error loading image:', error);
+                document.getElementById('image-name').textContent = appointment.image_name + ' (Preview unavailable)';
+            })
+            .getImageFromDrive(appointment.image_drive_id);
+    }
+
+}
+
+// Helper function to convert RGB to Hex
+function ix_rgbToHex(r, g, b) {
+    return "#" + ((1 << 24) + (r << 16) + (g << 8) + b).toString(16).slice(1);
+}
