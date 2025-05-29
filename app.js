@@ -13,8 +13,12 @@ const secretKey = 'e96bef517bec7bdc76803a2813169ea6'; // Must match what you use
 // Define your base prefix
 const BASE_URL = isProduction
   ? "https://render-upload-qy2q.onrender.com/"  //production link
-  : "https://6ec2-74-101-4-223.ngrok-free.app"; //test ngrok server : must be replaced if ngrok reloaded
+  : "https://d061-216-165-95-164.ngrok-free.app"; //test ngrok server : must be replaced if ngrok reloaded
 
+
+app.get('/', (req, res) => {
+  res.redirect('https://instagram.com/ur.nail.boutique');
+});
 // Middleware
 app.use(express.json({ limit: '50mb' }));  // Increased limit for base64 images
 app.use(express.urlencoded({ extended: true }));
@@ -27,6 +31,10 @@ app.use((req, res, next) => {
     res.header('Access-Control-Allow-Headers', 'Content-Type');
     next();
 });
+app.use('/images', express.static('images'));
+app.use(express.static('public'));
+
+
 
 // Serve opt-in page
 app.get('/optin', (req, res) => {
